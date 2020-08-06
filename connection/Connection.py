@@ -4,11 +4,19 @@ import psycopg2
 # Classe que modulariza a conexão ao banco de dados postgres
 class Connection(object):
   _db=None
-  def __init__(self, mhost, database, user, password):
-    self._db = psycopg2.connect(host=mhost, database=database, user=user, password=password)
 
-  # Função para manipulação do banco, caso sejam necessárias inserções
-  def manipular(self, sql):
+  # Construtor da Conexão ao bd.
+  # hostname: localhost ou IP
+  # database: nome do banco de dados
+  # user: nome de usuário do banco de dados
+  # password: senha do usuário de banco de dados
+  def __init__(self, hostname, database, user, password):
+    self._db = psycopg2.connect(host=hostname, database=database, user=user, password=password)
+
+  # Função para manipulação do banco, caso sejam necessárias inserções, onde a query sql é
+  #passada como parâmetro.
+  # sql: Query a ser executa no banco de dados
+  def manipulate(self, sql):
     try:
       cursor = self._db.cursor()
       cursor.execute(sql)
@@ -18,8 +26,9 @@ class Connection(object):
       return False
     return True
 
-  # Função para queries SQL
-  def consultar(self, sql):
+  # Função para queries de consultas SQL.
+  # sql: Query de consulta a ser executada no banco de dados.
+  def select(self, sql):
     result=None
     try:
       cursor = self._db.cursor()
@@ -30,6 +39,6 @@ class Connection(object):
     return result
 
   # Encerrar conexão com o banco de dados
-  def fechar(self):
+  def close(self):
     self._db.close()
 
