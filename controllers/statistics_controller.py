@@ -11,4 +11,3 @@ def graduates_by_period():
   return {
     "message": "Teste de endpoint!"
   }
-

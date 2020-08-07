@@ -2,9 +2,10 @@
 import sys
 sys.path.append("../connection")
 from Connection import Connection
+from jproperties import Properties
 
-# credenciais de conexão
-connection = Connection('localhost', 'bd_development', 'postgres', 'docker')
+# instância da conexão
+connection = Connection()
 
 # função para processar as queries para teste
 def process_query(sql):

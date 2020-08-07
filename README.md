@@ -1,6 +1,6 @@
 # pdc-backend
 
-## Instruções para instalação do psycopg2 e Flask
+## Instruções para instalação de dependências
 
 **Obs:** é necessário ter o pip (instalador de pacotes python) instalado em sua máquina.
 
@@ -37,6 +37,14 @@ pip install --upgrade pip
 Para executar os testes, execute:
 ```
 pytest
+```
+
+## Variáveis de ambiente
+
+É necessário instalar o módulo jproperties para poder carregar o arquivo .properties com as credenciais de acesso ao banco de dados.
+
+```
+pip install jproperties
 ```
 
 ## Execução
