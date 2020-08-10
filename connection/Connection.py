@@ -4,7 +4,7 @@ from jproperties import Properties
 
 # configuração do jproperties para leitura do arquivo db.properties
 configs = Properties()
-with open('../connection/db.properties', 'rb') as config_file:
+with open('./connection/db.properties', 'rb') as config_file:
   configs.load(config_file)
 
 # Classe que modulariza a conexão ao banco de dados postgres
