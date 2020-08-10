@@ -5,13 +5,16 @@ from Connection import Connection
 from flask import jsonify
 from . import routes
 
+from util import constants
+
 connection = Connection()
 
 @routes.route("/egressos")
 def graduates_by_period():
   query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos\
     FROM "DiscenteVinculo"\
-    WHERE id_curso=4 AND id_situacao_vinculo=10\
+    WHERE id_curso=' + str(constants.COMPUTACAO_KEY) + \
+    ' AND id_situacao_vinculo=' + str(constants.GRADUADO) + '\
     GROUP BY semestre_vinculo\
     ORDER BY semestre_vinculo'
   result = connection.select(query)
