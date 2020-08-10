@@ -54,7 +54,7 @@ Para instalar o livereload, para reinicio autómatico do servidor após atualiza
 pip install livereload
 ```
 
-## Execução
+## Execução da aplicação
 
 Após instalar todas as dependências, para executar a aplicação basta executar o seguinte comando na raiz do projeto
 ```
