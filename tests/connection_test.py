@@ -1,8 +1,7 @@
 # coding: utf-8
 import sys
-sys.path.append("../connection")
+sys.path.append("./connection")
 from Connection import Connection
-from jproperties import Properties
 
 # instância da conexão
 connection = Connection()

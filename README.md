@@ -47,14 +47,16 @@ pytest
 pip install jproperties
 ```
 
-## Execução
+## Dependências de desenvolvimento
 
-Antes de executar é necessário exportar uma variável de ambiente para o Flask poder trabalhar, usando o seguinte comando dentro da pasta **/controllers**:
+Para instalar o livereload, para reinicio autómatico do servidor após atualizações, execute:
 ```
-export FLASK_APP=statistics_controller.py
+pip install livereload
 ```
 
-Então, para executar o servidor, utilize:
+## Execução da aplicação
+
+Após instalar todas as dependências, para executar a aplicação basta executar o seguinte comando na raiz do projeto
 ```
-flask run
+python run.py
 ```
