@@ -1,0 +1,15 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "description": "Computação@UFCG",
+    "version": "1.0.0",
+    "title": "Painel de Controle - Backend",
+    "contact": {
+      "email": ""
+    },
+    "license": {
+      "name": "GNU - General Public License",
+      "url": "https://opensource.org/licenses/gpl-license"
+    }
+  }
+}

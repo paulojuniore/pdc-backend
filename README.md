@@ -54,6 +54,14 @@ Para instalar o livereload, para reinicio autómatico do servidor após atualiza
 pip install livereload
 ```
 
+## Documentação da API
+
+Para instalar a biblioteca que gerencia a documentação da API, digite:
+```
+pip install flask_swagger_ui
+```
+Para visualizar a documentação da API, basta acessar a rota **/swagger**
+
 ## Execução da aplicação
 
 Após instalar todas as dependências, para executar a aplicação basta executar o seguinte comando na raiz do projeto
