@@ -60,7 +60,7 @@ Para instalar a biblioteca que gerencia a documentação da API, digite:
 ```
 pip install flask_swagger_ui
 ```
-Para visualizar a documentação da API, basta acessar a rota **/swagger**
+Para visualizar a documentação da API, basta acessar a rota **/api/swagger**
 
 ## Execução da aplicação
 

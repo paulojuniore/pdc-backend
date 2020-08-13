@@ -43,7 +43,7 @@ def formatter_graduates(periods):
 
 # Rota responsável por retornar o número de alunos evadidos do curso de Computação 
 #agrupados por período, onde o id_motivo deve ser um valor entre 1 e 9, inclusive.
-@routes.route("/evadidos/<int:id_motivo>")
+@routes.route("/api/estatisticas/evadidos/<int:id_motivo>")
 def escaped_from_periodo(id_motivo):
   if (id_motivo >= 1 and id_motivo <= 9):
     query = 'SELECT semestre_vinculo, count(*) AS qtd_evadidos\
@@ -64,7 +64,7 @@ def escaped_from_periodo(id_motivo):
 
 # Rota responsável por retornar o número de alunos egressos (formados) do curso de 
 #Computação e suas estatísticas de todos os períodos.
-@routes.route("/egressos")
+@routes.route("/api/estatisticas/egressos")
 def graduates_by_period():
   query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos\
     FROM "DiscenteVinculo"\
@@ -83,7 +83,7 @@ def graduates_by_period():
 # Rota responsável por retornar o número de alunos egressos (formados) do curso
 #de Computação, a partir de um intervalo definido de períodos e retornar também
 #suas estatísticas.
-@routes.route("/egressos/<minimo>/<maximo>")
+@routes.route("/api/estatisticas/egressos/<minimo>/<maximo>")
 def graduates_by_interval_of_periods(minimo, maximo):
   if (minimo > maximo):
     return { "error": "Parameters or invalid request" }, 404
