@@ -41,10 +41,31 @@ def formatter_graduates(periods):
     response.append({"semestre_vinculo": periods[i][0], "qtd_egressos": periods[i][1]})
   return response
 
+def process_query_of_escaped(id):
+  query = 'SELECT semestre_vinculo, count(*) AS qtd_evadidos\
+    FROM "DiscenteVinculo"\
+    WHERE id_curso=' + str(constants.COMPUTACAO_KEY) + \
+    ' AND id_situacao_vinculo=' + str(id) + '\
+    GROUP BY semestre_vinculo\
+    ORDER BY semestre_vinculo'
+  result = connection.select(query)
+  
+  retorno = []
+  for i in range(len(result)):
+    retorno.append({"semestre": result[i][0], "tag"+str(id): result[i][1]})
+  return retorno
+
+@routes.route("/api/estatisticas/evadidos")
+def escaped_from_period_from_all_types():
+  motivos = []
+  for i in range(1,10):
+    motivos.append(process_query_of_escaped(i))
+  return jsonify(motivos)
+
 # Rota responsável por retornar o número de alunos evadidos do curso de Computação 
 #agrupados por período, onde o id_motivo deve ser um valor entre 1 e 9, inclusive.
 @routes.route("/api/estatisticas/evadidos/<int:id_motivo>")
-def escaped_from_periodo(id_motivo):
+def escaped_from_period(id_motivo):
   if (id_motivo >= 1 and id_motivo <= 9):
     query = 'SELECT semestre_vinculo, count(*) AS qtd_evadidos\
       FROM "DiscenteVinculo"\
@@ -66,6 +87,28 @@ def escaped_from_periodo(id_motivo):
 #Computação e suas estatísticas de todos os períodos.
 @routes.route("/api/estatisticas/egressos")
 def graduates_by_period():
+  args = request.args
+
+  # Para rotas do tipo /api/estatisticas/egressos?periodo=2019.2, por exemplo:
+  #retorna o número de egressos que o período informado na rota obteve.
+  if (len(args) == 1):
+    periodo = args.get('periodo')
+
+    query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos\
+      FROM "DiscenteVinculo"\
+      WHERE id_curso=' + str(constants.COMPUTACAO_KEY) + \
+      ' AND id_situacao_vinculo=' + str(constants.GRADUADO) + '\
+      AND semestre_vinculo=\'' + str(periodo) + '\'\
+      GROUP BY semestre_vinculo\
+      ORDER BY semestre_vinculo'
+
+    result = connection.select(query)
+
+    if (len(result) == 0):
+      return { "semestre_vinculo": periodo, "qtd_egressos": 0 }
+    else:
+      return jsonify(formatter_graduates(result))
+    
   query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos\
     FROM "DiscenteVinculo"\
     WHERE id_curso=' + str(constants.COMPUTACAO_KEY) + \
