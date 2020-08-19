@@ -11,5 +11,34 @@
       "name": "GNU - General Public License",
       "url": "https://opensource.org/licenses/gpl-license"
     }
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "tags": [
+    {
+      "name": "PDC Backend",
+      "description": "Example API"
+    }
+  ],
+  "paths": {
+    "/api/estatisticas/egressos": {
+      "get": {
+        "tags": [
+          "Egressos Request"
+        ],
+        "summary": "Return egressos request",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/api/estatisticas/egressos"
+            }
+          }
+        }
+      }
+    }
   }
 }

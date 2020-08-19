@@ -6,6 +6,7 @@ from flask import jsonify, request
 from . import routes
 from util import constants
 
+# Instância da conexão ao banco de dados.
 connection = Connection()
 
 # Função que retorna estatísticas sobre os egressos, informações como o total de graduados
@@ -37,79 +38,173 @@ def get_statistics(results):
     periodo_max_graduados, min_graduados, max_graduados]
 
 
-# Função que monta a estrutura json para os alunos egressos (graduados), retorna um
+# Função que monta a estrutura json para os alunos egressos (graduados), retorna um 
 ## array de objetos, onde cada objeto contém o semestre de vínculo e a quantidade de
 ### egressos daquele período.
 def formatter_graduates(periods):
   response = []
   for i in range(len(periods)):
     response.append({"semestre_vinculo": periods[i][0], "qtd_egressos": periods[i][1]})
+
   return response
+
+
+# Rota que retorna o número de alunos evadidos por período, a partir do id do motivo
+## de cancelamento da matrícula.
+def process_query_of_escaped(id):
+
+  query = 'SELECT semestre_vinculo, count(*) AS qtd_evadidos\
+    FROM "DiscenteVinculo"\
+    WHERE id_curso=' + str(constants.COMPUTACAO_KEY) + \
+    ' AND id_situacao_vinculo=' + str(id) + '\
+    GROUP BY semestre_vinculo\
+    ORDER BY semestre_vinculo'
+
+  result = connection.select(query)
+  
+  retorno = []
+  for i in range(len(result)):
+    retorno.append({"semestre": result[i][0], "tag"+str(id): result[i][1]})
+
+  return retorno
+
+
+# Rota que retorna um json com todos os números de evadidos por período de todos os 
+## motivos, que podem ter do id 1 ao 9, inclusive.
+@routes.route("/api/estatisticas/evadidos")
+def escaped_from_period_from_all_types():
+  motivos = []
+  for i in range(1,10):
+    motivos.append(process_query_of_escaped(i))
+
+  return jsonify(motivos)
 
 
 # Rota responsável por retornar o número de alunos evadidos do curso de Computação 
 ## agrupados por período, onde o id_motivo deve ser um valor entre 1 e 9, inclusive.
-@routes.route("/evadidos/<int:id_motivo>")
-def escaped_from_periodo(id_motivo):
+@routes.route("/api/estatisticas/evadidos/<int:id_motivo>")
+def escaped_from_period(id_motivo):
+
+  # Verificação da faixa do id, que correspondem ao motivo de evasão do aluno.
   if (id_motivo >= 1 and id_motivo <= 9):
-    query = 'SELECT semestre_vinculo, count(*) AS qtd_evadidos\
+    args = request.args
+
+    # Verifica se foi passado somente um parâmetro na rota, que no caso, é o período
+    ## a ser consultado o número de evadidos.
+    if (len(args) == 1):
+      periodo = args.get('periodo')
+
+      query = 'SELECT semestre_vinculo, count(*) AS qtd_evadidos\
       FROM "DiscenteVinculo"\
       WHERE id_curso=' + str(constants.COMPUTACAO_KEY) + \
       ' AND id_situacao_vinculo=' + str(id_motivo) + '\
+      AND semestre_vinculo=\'' + str(periodo) + '\'\
       GROUP BY semestre_vinculo\
       ORDER BY semestre_vinculo'
 
-    result = connection.select(query)
+      result = connection.select(query)
 
-    response = []
-    for i in range(len(result)):
-      response.append({ "semestre_vinculo": result[i][0], "qtd_evadidos": result[i][1] })
+      # Verifica se não há número de evadidos para o período passado como parâmetro na rota.
+      if (len(result) == 0):
+        return { "semestre_vinculo": periodo, "qtd_evadidos": 0 }
+      else:
+        return { "semestre_vinculo": periodo, "qtd_evadidos": result[0][1] }
+    
+    # Caso não seja passado parâmetro algum na rota, são trazidos os dados de todos os períodos
+    ## já cadastrados
+    else:
+      query = 'SELECT semestre_vinculo, count(*) AS qtd_evadidos\
+        FROM "DiscenteVinculo"\
+        WHERE id_curso=' + str(constants.COMPUTACAO_KEY) + \
+        ' AND id_situacao_vinculo=' + str(id_motivo) + '\
+        GROUP BY semestre_vinculo\
+        ORDER BY semestre_vinculo'
 
-    return jsonify(response)
+      result = connection.select(query)
 
+      response = []
+      for i in range(len(result)):
+        response.append({ "semestre_vinculo": result[i][0], "qtd_evadidos": result[i][1] })
+
+      return jsonify(response)
+
+  # Caso o id de evasão não corresponda a faixa válida (1 a 9, inclusive), é retornada
+  ## uma mensagem de erro.
   else:
     return { "error": "Invalid resource" }, 404
 
 
 # Rota responsável por retornar o número de alunos egressos (formados) do curso de 
 ## Computação e suas estatísticas de todos os períodos.
-@routes.route("/egressos")
+@routes.route("/api/estatisticas/egressos")
 def graduates_by_period():
-  query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos\
-    FROM "DiscenteVinculo"\
-    WHERE id_curso=' + str(constants.COMPUTACAO_KEY) + \
-    ' AND id_situacao_vinculo=' + str(constants.GRADUADO) + '\
-    GROUP BY semestre_vinculo\
-    ORDER BY semestre_vinculo'
 
-  result = connection.select(query)
-  statistics = get_statistics(result)
+  # Acesso aos route params (parâmetros que são passados no endereço da rota).
+  args = request.args
 
-  return jsonify(total_graduados=statistics[0], media_graduados=statistics[1], 
-    periodo_min_graduados=statistics[2], periodo_max_graduados=statistics[3], 
-    min_graduados=statistics[4], max_graduados=statistics[5], periodos=formatter_graduates(result))
+  # Para rotas do tipo /api/estatisticas/egressos?periodo=2019.2, por exemplo.
+  ## retorna o número de egressos que o período informado na rota obteve.
+  if (len(args) == 1):
+    periodo = args.get('periodo')
 
+    query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos\
+      FROM "DiscenteVinculo"\
+      WHERE id_curso=' + str(constants.COMPUTACAO_KEY) + \
+      ' AND id_situacao_vinculo=' + str(constants.GRADUADO) + '\
+      AND semestre_vinculo=\'' + str(periodo) + '\'\
+      GROUP BY semestre_vinculo\
+      ORDER BY semestre_vinculo'
 
-# Rota responsável por retornar o número de alunos egressos (formados) do curso
-## de Computação, a partir de um intervalo definido de períodos e retornar também
-### suas estatísticas.
-@routes.route("/egressos/<minimo>/<maximo>")
-def graduates_by_interval_of_periods(minimo, maximo):
-  if (minimo > maximo):
-    return { "error": "Parameters or invalid request" }, 404
+    result = connection.select(query)
 
-  query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos\
-    FROM "DiscenteVinculo"\
-    WHERE id_curso=' + str(constants.COMPUTACAO_KEY) + \
-    'AND id_situacao_vinculo=' + str(constants.GRADUADO) + \
-    'AND semestre_vinculo BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\'\
-    GROUP BY semestre_vinculo\
-    ORDER BY semestre_vinculo'
+    # caso não hajam registros que correspondam a query passada.
+    if (len(result) == 0):
+      return { "semestre_vinculo": periodo, "qtd_egressos": 0 }
+    else:
+      return jsonify(formatter_graduates(result))
+  
 
-  result = connection.select(query)
-  statistics = get_statistics(result)
+  # Para rotas do tipo '.../api/estatisticas/egressos?minimo=1999.1&maximo=2010.2', por exemplo.
+  ## retornam o número de egressos por período na faixa que foi especificada na rota, além
+  ### de suas estatísticas.
+  elif (len(args) == 2):
+    minimo = args.get('minimo')
+    maximo = args.get('maximo')
 
-  return jsonify(total_graduados=statistics[0], media_graduados=statistics[1], 
-    periodo_min_graduados=statistics[2], periodo_max_graduados=statistics[3],
-    min_graduados=statistics[4], max_graduados=statistics[5], 
-    periodos=formatter_graduates(result))
+    # Caso o periodo minimo do intervalo seja maior que o maximo ou então igual, retorna
+    ## uma mensagem de erro com código 404 not found.
+    if (minimo > maximo or minimo == maximo):
+      return { "error": "Parameters or invalid request" }, 404
+
+    query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos\
+      FROM "DiscenteVinculo"\
+      WHERE id_curso=' + str(constants.COMPUTACAO_KEY) + \
+      'AND id_situacao_vinculo=' + str(constants.GRADUADO) + \
+      'AND semestre_vinculo BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\'\
+      GROUP BY semestre_vinculo\
+      ORDER BY semestre_vinculo'
+
+    result = connection.select(query)
+    statistics = get_statistics(result)
+
+    return jsonify(total_graduados=statistics[0], media_graduados=statistics[1], 
+      periodo_min_graduados=statistics[2], periodo_max_graduados=statistics[3],
+      min_graduados=statistics[4], max_graduados=statistics[5], 
+      periodos=formatter_graduates(result))
+
+  # Para rotas do tipo '.../api/estatisticas/egressos', que retornam o número de egressos de
+  ## todos os períodos até então cadastrados.
+  else:
+    query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos\
+      FROM "DiscenteVinculo"\
+      WHERE id_curso=' + str(constants.COMPUTACAO_KEY) + \
+      ' AND id_situacao_vinculo=' + str(constants.GRADUADO) + '\
+      GROUP BY semestre_vinculo\
+      ORDER BY semestre_vinculo'
+
+    result = connection.select(query)
+    statistics = get_statistics(result)
+
+    return jsonify(total_graduados=statistics[0], media_graduados=statistics[1], 
+      periodo_min_graduados=statistics[2], periodo_max_graduados=statistics[3], 
+      min_graduados=statistics[4], max_graduados=statistics[5], periodos=formatter_graduates(result))

@@ -1,0 +1,7 @@
+Flask==1.1.2
+flask-swagger-ui==3.25.0
+jproperties==2.1.0
+livereload==2.6.2
+psycopg2-binary==2.8.5
+pytest==6.0.1
+requests==2.18.4
