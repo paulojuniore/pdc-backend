@@ -15,3 +15,17 @@ Após instalar todas as dependências, para executar a aplicação basta executa
 ```
 python run.py
 ```
+
+## Execução da aplicação com Docker
+
+Fazer o build da imagem a partir da raiz do projeto:
+```
+docker build -t pdc-back:dev .
+```
+
+Criando o container da aplicação a partir da imagem:
+```
+docker run -it --name pdc-back-cont -p 5000:5000 pdc-back:dev
+```
+
+Após o procedimento anterior, já é possível acessar a aplicação que estará em execução em http://localhost:5000
