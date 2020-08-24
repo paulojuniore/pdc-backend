@@ -163,7 +163,7 @@ def escaped_from_period():
   # Verifica se foi passado somente um parâmetro na rota, que no caso, é o período
   ## a ser consultado o número de evadidos.
   if (len(args) == 1):
-    periodo = args.get('periodo')
+    periodo = args.get('de')
 
     # Processando queries com os ID's de 1 a 9 e armazenando todos os resultados em uma lista,
     ## para posteriormente fazer um merge dos resultados.
@@ -186,8 +186,8 @@ def escaped_from_period():
     return jsonify(json_return)
 
   elif (len(args) == 2):
-    minimo = args.get('minimo')
-    maximo = args.get('maximo')
+    minimo = args.get('de')
+    maximo = args.get('ate')
 
     # Caso o periodo minimo do intervalo seja maior que o maximo ou então igual, retorna
     ## uma mensagem de erro com código 404 not found.
@@ -214,7 +214,7 @@ def escaped_from_period():
     for i in range(1, 10):
       evadidos_por_motivo.append(process_query_of_escaped(i))
 
-    joined_results = join_results_of_escaped_query(motivos)
+    joined_results = join_results_of_escaped_query(evadidos_por_motivo)
 
     joined_results_with_zeros = fill_tag_list_with_zeros(joined_results)
 
@@ -234,7 +234,7 @@ def graduates_by_period():
   # Para rotas do tipo /api/estatisticas/egressos?periodo=2019.2, por exemplo.
   ## retorna o número de egressos que o período informado na rota obteve.
   if (len(args) == 1):
-    periodo = args.get('periodo')
+    periodo = args.get('de')
 
     query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos\
       FROM "DiscenteVinculo"\
@@ -257,8 +257,8 @@ def graduates_by_period():
   ## retornam o número de egressos por período na faixa que foi especificada na rota, além
   ### de suas estatísticas.
   elif (len(args) == 2):
-    minimo = args.get('minimo')
-    maximo = args.get('maximo')
+    minimo = args.get('de')
+    maximo = args.get('ate')
 
     # Caso o periodo minimo do intervalo seja maior que o maximo ou então igual, retorna
     ## uma mensagem de erro com código 404 not found.
