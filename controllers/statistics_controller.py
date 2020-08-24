@@ -173,6 +173,8 @@ def escaped_from_period():
 
     joined_results = join_results_of_escaped_query(evadidos_por_motivo)
 
+    # Caso não hajam resultados para o periodo especificado, é retornado um json com
+    ## todas as tags zeradas.
     if (len(joined_results) == 0):
       retorno =  {"periodo": periodo, "tags": { "tag1": 0, "tag2": 0, "tag3": 0, 
         "tag4": 0, "tag5": 0, "tag6": 0, "tag7": 0, "tag8": 0, "tag9": 0 } }
@@ -185,6 +187,9 @@ def escaped_from_period():
 
     return jsonify(json_return)
 
+  # Verifica se foram passados dois parâmetro na rota, que no caso, é o período de início
+  ## e fim para a consulta nesse intervalo sobre o número de evadidos por período por todos
+  ### os tipos de evasão.
   elif (len(args) == 2):
     minimo = args.get('de')
     maximo = args.get('ate')
@@ -231,8 +236,8 @@ def graduates_by_period():
   # Acesso aos route params (parâmetros que são passados no endereço da rota).
   args = request.args
 
-  # Para rotas do tipo /api/estatisticas/egressos?periodo=2019.2, por exemplo.
-  ## retorna o número de egressos que o período informado na rota obteve.
+  # Para rotas do tipo /api/estatisticas/egressos?de=2019.2, por exemplo.
+  ## Retorna o número de egressos que o período informado na rota obteve.
   if (len(args) == 1):
     periodo = args.get('de')
 
@@ -246,14 +251,14 @@ def graduates_by_period():
 
     result = connection.select(query)
 
-    # caso não hajam registros que correspondam a query passada.
+    # Caso não hajam registros que correspondam a query passada.
     if (len(result) == 0):
       return { "semestre_vinculo": periodo, "qtd_egressos": 0 }
     else:
       return jsonify(formatter_graduates(result))
   
 
-  # Para rotas do tipo '.../api/estatisticas/egressos?minimo=1999.1&maximo=2010.2', por exemplo.
+  # Para rotas do tipo '.../api/estatisticas/egressos?de=1999.1&ate=2010.2', por exemplo.
   ## retornam o número de egressos por período na faixa que foi especificada na rota, além
   ### de suas estatísticas.
   elif (len(args) == 2):
