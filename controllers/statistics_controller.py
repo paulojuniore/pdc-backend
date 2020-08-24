@@ -3,6 +3,7 @@ import sys
 sys.path.append("./connection")
 from Connection import Connection
 from flask import jsonify, request
+from flask_cors import cross_origin
 from . import routes
 from util import constants
 
@@ -155,6 +156,7 @@ def prepare_json_to_return(json):
 # Rota que retorna um json com todos os números de evadidos por período de todos os 
 ## motivos, que podem ter do id 1 ao 9, inclusive.
 @routes.route("/api/estatisticas/evadidos")
+@cross_origin()
 def escaped_from_period():
 
   # Acesso aos route params (parâmetros que são passados no endereço da rota).
@@ -231,6 +233,7 @@ def escaped_from_period():
 # Rota responsável por retornar o número de alunos egressos (formados) do curso de 
 ## Computação e suas estatísticas de todos os períodos.
 @routes.route("/api/estatisticas/egressos")
+@cross_origin()
 def graduates_by_period():
 
   # Acesso aos route params (parâmetros que são passados no endereço da rota).
