@@ -49,8 +49,50 @@ def formatter_graduates(periods):
   return response
 
 
-# Rota que retorna o número de alunos evadidos por período, a partir do id do motivo
-## de cancelamento da matrícula.
+# Função que retorna o número de alunos evadidos por período (a partir do id do motivo
+## de cancelamento da matrícula) de um único período passado.
+def process_query_of_one_period(id, periodo):
+
+  query = 'SELECT semestre_vinculo, count(*) AS qtd_evadidos\
+    FROM "DiscenteVinculo"\
+    WHERE id_curso=' + str(constants.COMPUTACAO_KEY) + \
+    ' AND id_situacao_vinculo=' + str(id) + '\
+    AND semestre_vinculo=\'' + str(periodo) + '\'\
+    GROUP BY semestre_vinculo\
+    ORDER BY semestre_vinculo'
+
+  result = connection.select(query)
+  
+  retorno = []
+  for i in range(len(result)):
+    retorno.append({"semestre": result[i][0], "tag"+str(id): result[i][1]})
+
+  return retorno
+
+
+# Função que retorna o número de alunos evadidos por período (a partir do id do motivo
+## de cancelamento da matrícula) de um intervalo de períodos passados.
+def process_query_of_interval_of_the_periods(id, minimo, maximo):
+
+  query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos\
+    FROM "DiscenteVinculo"\
+    WHERE id_curso=' + str(constants.COMPUTACAO_KEY) + \
+    'AND id_situacao_vinculo=' + str(id) + \
+    'AND semestre_vinculo BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\'\
+    GROUP BY semestre_vinculo\
+    ORDER BY semestre_vinculo'
+
+  result = connection.select(query)
+  
+  retorno = []
+  for i in range(len(result)):
+    retorno.append({"semestre": result[i][0], "tag"+str(id): result[i][1]})
+
+  return retorno
+
+
+# Função que retorna o número de alunos evadidos por período, a partir do id do motivo
+## de cancelamento da matrícula, de todos os períodos registrados.
 def process_query_of_escaped(id):
 
   query = 'SELECT semestre_vinculo, count(*) AS qtd_evadidos\
@@ -69,69 +111,116 @@ def process_query_of_escaped(id):
   return retorno
 
 
+# Fazendo a junção entre os 9 arrays de evadidos pelos motivos de 1 a 9, para que o
+## array tenha o formato { "periodo": { "tag1": 0, "tag2": 0, ..., "tag9": 0 }, ... },
+### onde tag(i) significa o número de evadidos pelo motivo (i) naquele período, sendo
+#### "i" um valor entre 1 e 9.
+def join_results_of_escaped_query(results):
+  dic_periodos = {}
+  for i in range(len(results)):
+    for j in range(len(results[i])):
+      if (results[i][j]['semestre'] in dic_periodos):
+        dic_periodos[str(results[i][j]['semestre'])]['tag'+str(i+1)] = results[i][j]['tag'+str(i+1)]
+      else:
+        dic_periodos[str(results[i][j]['semestre'])] = { 'tag'+str(i+1): results[i][j]['tag'+str(i+1)] }
+
+  return dic_periodos
+
+
+# Preenchendo com 0 as tags que não existem no objeto de cada período. Exemplo: caso o
+## período X só tenha evadidos em "tag1", "tag2" e "tag3", o trecho abaixo irá preencher
+### o objeto com o restante das tags até a 9, todas com o valor 0.    
+def fill_tag_list_with_zeros(json):
+  for i in json:
+    for j in range(1,10):
+      if ('tag'+str(j) in json[i]):
+        pass
+      else:
+        json[i]['tag'+str(j)] = 0
+  
+  return json
+
+
+# Função que prepara o json para retorno, onde cada objeto irá possui a chave semestre com
+## o período e outra chave tags, que correspondem as 9 tags que representam a quantidade
+### de evadidos pelo motivo i, onde i é um número entre 1 e 9, inclusive.
+def prepare_json_to_return(json):
+  json_response = []
+  for i in json:
+    json_response.append({ "periodo": i, "tags": json[i] })
+  
+  return json_response
+
+
 # Rota que retorna um json com todos os números de evadidos por período de todos os 
 ## motivos, que podem ter do id 1 ao 9, inclusive.
 @routes.route("/api/estatisticas/evadidos")
-def escaped_from_period_from_all_types():
-  motivos = []
-  for i in range(1,10):
-    motivos.append(process_query_of_escaped(i))
+def escaped_from_period():
 
-  return jsonify(motivos)
+  # Acesso aos route params (parâmetros que são passados no endereço da rota).
+  args = request.args
 
+  # Verifica se foi passado somente um parâmetro na rota, que no caso, é o período
+  ## a ser consultado o número de evadidos.
+  if (len(args) == 1):
+    periodo = args.get('periodo')
 
-# Rota responsável por retornar o número de alunos evadidos do curso de Computação 
-## agrupados por período, onde o id_motivo deve ser um valor entre 1 e 9, inclusive.
-@routes.route("/api/estatisticas/evadidos/<int:id_motivo>")
-def escaped_from_period(id_motivo):
+    # Processando queries com os ID's de 1 a 9 e armazenando todos os resultados em uma lista,
+    ## para posteriormente fazer um merge dos resultados.
+    evadidos_por_motivo = []
+    for i in range(1, 10):
+      evadidos_por_motivo.append(process_query_of_one_period(i, periodo))
 
-  # Verificação da faixa do id, que correspondem ao motivo de evasão do aluno.
-  if (id_motivo >= 1 and id_motivo <= 9):
-    args = request.args
+    joined_results = join_results_of_escaped_query(evadidos_por_motivo)
 
-    # Verifica se foi passado somente um parâmetro na rota, que no caso, é o período
-    ## a ser consultado o número de evadidos.
-    if (len(args) == 1):
-      periodo = args.get('periodo')
+    if (len(joined_results) == 0):
+      retorno =  {"periodo": periodo, "tags": { "tag1": 0, "tag2": 0, "tag3": 0, 
+        "tag4": 0, "tag5": 0, "tag6": 0, "tag7": 0, "tag8": 0, "tag9": 0 } }
+      
+      return jsonify(retorno)
 
-      query = 'SELECT semestre_vinculo, count(*) AS qtd_evadidos\
-      FROM "DiscenteVinculo"\
-      WHERE id_curso=' + str(constants.COMPUTACAO_KEY) + \
-      ' AND id_situacao_vinculo=' + str(id_motivo) + '\
-      AND semestre_vinculo=\'' + str(periodo) + '\'\
-      GROUP BY semestre_vinculo\
-      ORDER BY semestre_vinculo'
+    joined_results_with_zeros = fill_tag_list_with_zeros(joined_results)
 
-      result = connection.select(query)
+    json_return = prepare_json_to_return(joined_results_with_zeros)
 
-      # Verifica se não há número de evadidos para o período passado como parâmetro na rota.
-      if (len(result) == 0):
-        return { "semestre_vinculo": periodo, "qtd_evadidos": 0 }
-      else:
-        return { "semestre_vinculo": periodo, "qtd_evadidos": result[0][1] }
+    return jsonify(json_return)
+
+  elif (len(args) == 2):
+    minimo = args.get('minimo')
+    maximo = args.get('maximo')
+
+    # Caso o periodo minimo do intervalo seja maior que o maximo ou então igual, retorna
+    ## uma mensagem de erro com código 404 not found.
+    if (minimo > maximo or minimo == maximo):
+      return { "error": "Parameters or invalid request" }, 404
+
+    evadidos_por_motivo = []
+    for i in range(1, 10):
+      evadidos_por_motivo.append(process_query_of_interval_of_the_periods(i, minimo, maximo))
+
+    joined_results = join_results_of_escaped_query(evadidos_por_motivo)
     
-    # Caso não seja passado parâmetro algum na rota, são trazidos os dados de todos os períodos
-    ## já cadastrados
-    else:
-      query = 'SELECT semestre_vinculo, count(*) AS qtd_evadidos\
-        FROM "DiscenteVinculo"\
-        WHERE id_curso=' + str(constants.COMPUTACAO_KEY) + \
-        ' AND id_situacao_vinculo=' + str(id_motivo) + '\
-        GROUP BY semestre_vinculo\
-        ORDER BY semestre_vinculo'
+    joined_results_with_zeros = fill_tag_list_with_zeros(joined_results)
 
-      result = connection.select(query)
+    json_return = prepare_json_to_return(joined_results_with_zeros)
 
-      response = []
-      for i in range(len(result)):
-        response.append({ "semestre_vinculo": result[i][0], "qtd_evadidos": result[i][1] })
-
-      return jsonify(response)
-
-  # Caso o id de evasão não corresponda a faixa válida (1 a 9, inclusive), é retornada
-  ## uma mensagem de erro.
+    return jsonify(json_return)
+    
+  # Caso não seja passado parâmetro algum na rota, são trazidos os dados de todos os períodos
+  ## já cadastrados
   else:
-    return { "error": "Invalid resource" }, 404
+    
+    evadidos_por_motivo = []
+    for i in range(1, 10):
+      evadidos_por_motivo.append(process_query_of_escaped(i))
+
+    joined_results = join_results_of_escaped_query(motivos)
+
+    joined_results_with_zeros = fill_tag_list_with_zeros(joined_results)
+
+    json_return = prepare_json_to_return(joined_results_with_zeros)
+    
+    return jsonify(json_return)  
 
 
 # Rota responsável por retornar o número de alunos egressos (formados) do curso de 
