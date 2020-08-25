@@ -305,3 +305,10 @@ def graduates_by_period():
     return jsonify(total_graduados=statistics[0], media_graduados=statistics[1], 
       periodo_min_graduados=statistics[2], periodo_max_graduados=statistics[3], 
       min_graduados=statistics[4], max_graduados=statistics[5], periodos=formatter_graduates(result))
+
+
+@routes.route("/api/estatisticas/ativos")
+@cross_origin()
+def active_students():
+
+  return { "ativos": "ok" }
