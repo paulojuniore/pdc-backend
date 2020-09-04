@@ -324,6 +324,7 @@ def active_students():
       ON "Turma".id_disciplina="Disciplina".id\
     WHERE id_curso=' + str(constants.COMPUTACAO_KEY)  + '\
     AND id_situacao_vinculo=' + str(constants.ATIVO) + '\
+    AND "DiscenteDisciplina".id_situacao=' + str(constants.ID_APROVADO) + '\
     GROUP BY "DiscenteVinculo".matricula\
     ORDER BY SUM("Disciplina".creditos) DESC'
 
@@ -331,7 +332,8 @@ def active_students():
 
   json_return = []
   for i in result:
-    percent = (i[1] * 100) / 196
+    percent = (i[1] * 100) / int(constants.TOTAL_CREDITOS)
     json_return.append({ "matricula": i[0], "porcentagem_concluida": round(percent, 2) })
+    cont += 1
 
   return jsonify(json_return)
