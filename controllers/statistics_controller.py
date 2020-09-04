@@ -307,8 +307,31 @@ def graduates_by_period():
       min_graduados=statistics[4], max_graduados=statistics[5], periodos=formatter_graduates(result))
 
 
+# Rota responsável por retornar informações sobre os alunos ativos do curso de Computação,
+## informações estas que são a matrícula do aluno e a porcentagem concluída do curso com 
+### base na quantidade de créditos que o aluno já possui.
 @routes.route("/api/estatisticas/ativos")
 @cross_origin()
 def active_students():
 
-  return { "ativos": "ok" }
+  query = 'SELECT "DiscenteVinculo".matricula, SUM("Disciplina".creditos)\
+    FROM "DiscenteVinculo"\
+    INNER JOIN "DiscenteDisciplina"\
+      ON "DiscenteVinculo".matricula="DiscenteDisciplina".matricula\
+    INNER JOIN "Turma"\
+      ON "DiscenteDisciplina".id_turma="Turma".id\
+    INNER JOIN "Disciplina"\
+      ON "Turma".id_disciplina="Disciplina".id\
+    WHERE id_curso=' + str(constants.COMPUTACAO_KEY)  + '\
+    AND id_situacao_vinculo=' + str(constants.ATIVO) + '\
+    GROUP BY "DiscenteVinculo".matricula\
+    ORDER BY SUM("Disciplina".creditos) DESC'
+
+  result = connection.select(query)
+
+  json_return = []
+  for i in result:
+    percent = (i[1] * 100) / 196
+    json_return.append({ "matricula": i[0], "porcentagem_concluida": round(percent, 2) })
+
+  return jsonify(json_return)
