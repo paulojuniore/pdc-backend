@@ -333,7 +333,8 @@ def active_students():
   json_return = []
   for i in result:
     percent = (i[1] * 100) / int(constants.TOTAL_CREDITOS)
-    json_return.append({ "matricula": i[0], "porcentagem_concluida": round(percent, 2) })
-    cont += 1
+    periodo_ingresso = str(i[0][1:3]) + "." + str(i[0][3])
+    json_return.append({ "matricula": i[0], "periodo_ingresso": periodo_ingresso,
+      "porcentagem_concluida": round(percent, 2) })
 
   return jsonify(json_return)
