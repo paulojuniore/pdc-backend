@@ -56,7 +56,7 @@ def process_query_of_one_period(id, periodo):
 
   query = 'SELECT semestre_vinculo, count(*) AS qtd_evadidos\
     FROM "DiscenteVinculo"\
-    WHERE id_curso=' + str(constants.COMPUTACAO_KEY) + \
+    WHERE id_curso=' + str(constants.COMPUTACAO_ID) + \
     ' AND id_situacao_vinculo=' + str(id) + '\
     AND semestre_vinculo=\'' + str(periodo) + '\'\
     GROUP BY semestre_vinculo\
@@ -77,7 +77,7 @@ def process_query_of_interval_of_the_periods(id, minimo, maximo):
 
   query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos\
     FROM "DiscenteVinculo"\
-    WHERE id_curso=' + str(constants.COMPUTACAO_KEY) + \
+    WHERE id_curso=' + str(constants.COMPUTACAO_ID) + \
     'AND id_situacao_vinculo=' + str(id) + \
     'AND semestre_vinculo BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\'\
     GROUP BY semestre_vinculo\
@@ -98,7 +98,7 @@ def process_query_of_escaped(id):
 
   query = 'SELECT semestre_vinculo, count(*) AS qtd_evadidos\
     FROM "DiscenteVinculo"\
-    WHERE id_curso=' + str(constants.COMPUTACAO_KEY) + \
+    WHERE id_curso=' + str(constants.COMPUTACAO_ID) + \
     ' AND id_situacao_vinculo=' + str(id) + '\
     GROUP BY semestre_vinculo\
     ORDER BY semestre_vinculo'
@@ -246,7 +246,7 @@ def graduates_by_period():
 
     query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos\
       FROM "DiscenteVinculo"\
-      WHERE id_curso=' + str(constants.COMPUTACAO_KEY) + \
+      WHERE id_curso=' + str(constants.COMPUTACAO_ID) + \
       ' AND id_situacao_vinculo=' + str(constants.GRADUADO) + '\
       AND semestre_vinculo=\'' + str(periodo) + '\'\
       GROUP BY semestre_vinculo\
@@ -275,7 +275,7 @@ def graduates_by_period():
 
     query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos\
       FROM "DiscenteVinculo"\
-      WHERE id_curso=' + str(constants.COMPUTACAO_KEY) + \
+      WHERE id_curso=' + str(constants.COMPUTACAO_ID) + \
       'AND id_situacao_vinculo=' + str(constants.GRADUADO) + \
       'AND semestre_vinculo BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\'\
       GROUP BY semestre_vinculo\
@@ -294,7 +294,7 @@ def graduates_by_period():
   else:
     query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos\
       FROM "DiscenteVinculo"\
-      WHERE id_curso=' + str(constants.COMPUTACAO_KEY) + \
+      WHERE id_curso=' + str(constants.COMPUTACAO_ID) + \
       ' AND id_situacao_vinculo=' + str(constants.GRADUADO) + '\
       GROUP BY semestre_vinculo\
       ORDER BY semestre_vinculo'
@@ -322,7 +322,7 @@ def active_students():
       ON "DiscenteDisciplina".id_turma="Turma".id\
     INNER JOIN "Disciplina"\
       ON "Turma".id_disciplina="Disciplina".id\
-    WHERE id_curso=' + str(constants.COMPUTACAO_KEY)  + '\
+    WHERE id_curso=' + str(constants.COMPUTACAO_ID)  + '\
     AND id_situacao_vinculo=' + str(constants.ATIVO) + '\
     AND "DiscenteDisciplina".id_situacao=' + str(constants.ID_APROVADO) + '\
     GROUP BY "DiscenteVinculo".matricula\
@@ -331,10 +331,10 @@ def active_students():
   result = connection.select(query)
 
   json_return = []
-  for i in result:
-    percent = (i[1] * 100) / int(constants.TOTAL_CREDITOS)
-    periodo_ingresso = str(i[0][1:3]) + "." + str(i[0][3])
-    json_return.append({ "matricula": i[0], "periodo_ingresso": periodo_ingresso,
+  for registro in result:
+    percent = (registro[1] * 100) / int(constants.TOTAL_CREDITOS)
+    periodo_ingresso = str(registro[0][1:3]) + "." + str(registro[0][3])
+    json_return.append({ "matricula": registro[0], "periodo_ingresso": periodo_ingresso,
       "porcentagem_concluida": round(percent, 2) })
 
   return jsonify(json_return)
