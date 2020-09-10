@@ -6,6 +6,8 @@ from flask import jsonify, request
 from flask_cors import cross_origin
 from . import routes
 from util import constants
+sys.path.append("./models")
+from Curso import Curso
 
 # Instância da conexão ao banco de dados.
 connection = Connection()
@@ -313,28 +315,6 @@ def graduates_by_period():
 @routes.route("/api/estatisticas/ativos")
 @cross_origin()
 def active_students():
+  curso = Curso()
 
-  query = 'SELECT "DiscenteVinculo".matricula, SUM("Disciplina".creditos)\
-    FROM "DiscenteVinculo"\
-    INNER JOIN "DiscenteDisciplina"\
-      ON "DiscenteVinculo".matricula="DiscenteDisciplina".matricula\
-    INNER JOIN "Turma"\
-      ON "DiscenteDisciplina".id_turma="Turma".id\
-    INNER JOIN "Disciplina"\
-      ON "Turma".id_disciplina="Disciplina".id\
-    WHERE id_curso=' + str(constants.COMPUTACAO_ID)  + '\
-    AND id_situacao_vinculo=' + str(constants.ATIVO) + '\
-    AND "DiscenteDisciplina".id_situacao=' + str(constants.ID_APROVADO) + '\
-    GROUP BY "DiscenteVinculo".matricula\
-    ORDER BY SUM("Disciplina".creditos) DESC'
-
-  result = connection.select(query)
-
-  json_return = []
-  for registro in result:
-    percent = (registro[1] * 100) / int(constants.TOTAL_CREDITOS)
-    periodo_ingresso = str(registro[0][1:3]) + "." + str(registro[0][3])
-    json_return.append({ "matricula": registro[0], "periodo_ingresso": periodo_ingresso,
-      "porcentagem_concluida": round(percent, 2) })
-
-  return jsonify(json_return)
+  return curso.get_actives()
