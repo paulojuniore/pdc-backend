@@ -7,9 +7,30 @@ from util import constants
 
 class Curso():
 
+  # Construtor da classe
   def __init__(self):
     # Instância da conexão ao banco de dados.
     self.connection = Connection()
+
+    # Queries para setar os id's das constantes que são usadas nas consultas realizadas
+    ## na Classe.
+    query_id_curso = 'SELECT "Curso".id FROM "Curso" \
+      WHERE "Curso".nome=\'' + str(constants.COMPUTACAO_VALUE) + '\''
+
+    query_id_regular = 'SELECT "SituacaoVinculo".id FROM "SituacaoVinculo" \
+      WHERE "SituacaoVinculo".descricao=\'' + str(constants.REGULAR_VALUE) + '\''
+
+    query_id_aprovado = 'SELECT "SituacaoDisciplina".id FROM "SituacaoDisciplina" \
+      WHERE "SituacaoDisciplina".descricao=\'' + constants.APROVADO_VALUE + '\''
+
+    query_id_graduado = 'SELECT "SituacaoVinculo".id FROM "SituacaoVinculo" \
+      WHERE "SituacaoVinculo".descricao=\'' + str(constants.GRADUADO_VALUE) + '\''
+
+    # id's das constantes
+    self.id_computacao = str(self.connection.select(query_id_curso)[0][0])
+    self.id_regular = str(self.connection.select(query_id_regular)[0][0])
+    self.id_aprovado = str(self.connection.select(query_id_aprovado)[0][0])
+    self.id_graduado = str(self.connection.select(query_id_graduado)[0][0])
 
 
   # Função que retorna informações sobre os alunos ativos do curso de Computação,
@@ -17,17 +38,17 @@ class Curso():
   ### curso com base na quantidade de créditos que o aluno já possui.
   def get_actives(self):
     query = 'SELECT "DiscenteVinculo".matricula, SUM("Disciplina".creditos)\
-        FROM "DiscenteVinculo"\
-        INNER JOIN "DiscenteDisciplina"\
-          ON "DiscenteVinculo".matricula="DiscenteDisciplina".matricula\
-        INNER JOIN "Turma"\
-          ON "DiscenteDisciplina".id_turma="Turma".id\
-        INNER JOIN "Disciplina"\
-          ON "Turma".id_disciplina="Disciplina".id\
-        WHERE id_curso=' + str(constants.COMPUTACAO_ID)  + '\
-        AND id_situacao_vinculo=' + str(constants.ATIVO) + '\
-        AND "DiscenteDisciplina".id_situacao=' + str(constants.ID_APROVADO) + '\
-        GROUP BY "DiscenteVinculo".matricula'
+      FROM "DiscenteVinculo"\
+      INNER JOIN "DiscenteDisciplina"\
+        ON "DiscenteVinculo".matricula="DiscenteDisciplina".matricula\
+      INNER JOIN "Turma"\
+        ON "DiscenteDisciplina".id_turma="Turma".id\
+      INNER JOIN "Disciplina"\
+        ON "Turma".id_disciplina="Disciplina".id\
+      WHERE id_curso=' + self.id_computacao  + '\
+      AND id_situacao_vinculo=' + self.id_regular + '\
+      AND "DiscenteDisciplina".id_situacao=' + self.id_aprovado + '\
+      GROUP BY "DiscenteVinculo".matricula'
 
     result = self.connection.select(query)
 
@@ -97,8 +118,8 @@ class Curso():
 
       query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos\
         FROM "DiscenteVinculo"\
-        WHERE id_curso=' + str(constants.COMPUTACAO_ID) + \
-        ' AND id_situacao_vinculo=' + str(constants.GRADUADO) + '\
+        WHERE id_curso=' + self.id_computacao + \
+        ' AND id_situacao_vinculo=' + self.id_graduado + '\
         AND semestre_vinculo=\'' + str(periodo) + '\'\
         GROUP BY semestre_vinculo\
         ORDER BY semestre_vinculo'
@@ -126,8 +147,8 @@ class Curso():
 
       query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos\
         FROM "DiscenteVinculo"\
-        WHERE id_curso=' + str(constants.COMPUTACAO_ID) + \
-        'AND id_situacao_vinculo=' + str(constants.GRADUADO) + \
+        WHERE id_curso=' + self.id_computacao + \
+        'AND id_situacao_vinculo=' + self.id_graduado + \
         'AND semestre_vinculo BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\'\
         GROUP BY semestre_vinculo\
         ORDER BY semestre_vinculo'
@@ -145,8 +166,8 @@ class Curso():
     else:
       query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos\
         FROM "DiscenteVinculo"\
-        WHERE id_curso=' + str(constants.COMPUTACAO_ID) + \
-        ' AND id_situacao_vinculo=' + str(constants.GRADUADO) + '\
+        WHERE id_curso=' + self.id_computacao + \
+        ' AND id_situacao_vinculo=' + self.id_graduado + '\
         GROUP BY semestre_vinculo\
         ORDER BY semestre_vinculo'
 
@@ -165,7 +186,7 @@ class Curso():
 
     query = 'SELECT semestre_vinculo, count(*) AS qtd_evadidos\
       FROM "DiscenteVinculo"\
-      WHERE id_curso=' + str(constants.COMPUTACAO_ID) + \
+      WHERE id_curso=' + self.id_computacao + \
       ' AND id_situacao_vinculo=' + str(id) + '\
       AND semestre_vinculo=\'' + str(periodo) + '\'\
       GROUP BY semestre_vinculo\
@@ -186,7 +207,7 @@ class Curso():
 
     query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos\
       FROM "DiscenteVinculo"\
-      WHERE id_curso=' + str(constants.COMPUTACAO_ID) + \
+      WHERE id_curso=' + self.id_computacao + \
       'AND id_situacao_vinculo=' + str(id) + \
       'AND semestre_vinculo BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\'\
       GROUP BY semestre_vinculo\
@@ -207,7 +228,7 @@ class Curso():
 
     query = 'SELECT semestre_vinculo, count(*) AS qtd_evadidos\
       FROM "DiscenteVinculo"\
-      WHERE id_curso=' + str(constants.COMPUTACAO_ID) + \
+      WHERE id_curso=' + self.id_computacao + \
       ' AND id_situacao_vinculo=' + str(id) + '\
       GROUP BY semestre_vinculo\
       ORDER BY semestre_vinculo'
