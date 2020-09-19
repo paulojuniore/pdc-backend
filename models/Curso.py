@@ -63,7 +63,8 @@ class Curso():
         ON "DiscenteVinculo".cpf="Discente".cpf\
       WHERE "DiscenteVinculo".id_curso=' + self.id_computacao + '\
       AND "Discente".id_situacao=' + self.id_ativo + '\
-      AND "DiscenteVinculo".id_situacao_vinculo=' + self.id_regular
+      AND "DiscenteVinculo".id_situacao_vinculo=' + self.id_regular + '\
+      AND "Discente".per_int > 0'
 
     result = self.connection.select(query)
 
