@@ -26,44 +26,66 @@ class Curso():
     query_id_graduado = 'SELECT "SituacaoVinculo".id FROM "SituacaoVinculo" \
       WHERE "SituacaoVinculo".descricao=\'' + str(constants.GRADUADO_VALUE) + '\''
 
+    query_id_ativo = 'SELECT "SituacaoDiscente".id FROM "SituacaoDiscente" \
+      WHERE "SituacaoDiscente".descricao=\'' + str(constants.ATIVO_VALUE) + '\''
+
     # id's das constantes
     self.id_computacao = str(self.connection.select(query_id_curso)[0][0])
     self.id_regular = str(self.connection.select(query_id_regular)[0][0])
     self.id_aprovado = str(self.connection.select(query_id_aprovado)[0][0])
     self.id_graduado = str(self.connection.select(query_id_graduado)[0][0])
+    self.id_ativo = str(self.connection.select(query_id_ativo)[0][0])
+
+  # Calcula o percentual do curso concluído de cada aluno a partir dos créditos.
+  def get_percent(self, cred_obrig_int, cred_opt_int, cred_comp_int):
+    result = 0
+    if (cred_comp_int == 0):
+      pass
+    elif (cred_comp_int == 4):
+      result = 4
+    elif (cred_comp_int == 8):
+      result = 8
+    else:
+      result = max(0, min(8, cred_comp_int - 22))
+
+    porcentagem = min(cred_obrig_int, 132) + min(cred_opt_int, 56) + result
+
+    return (porcentagem / int(constants.TOTAL_CREDITOS)) * 100
 
 
   # Função que retorna informações sobre os alunos ativos do curso de Computação,
-  ## informações estas que são a matrícula do aluno e a porcentagem concluída do 
+  ## informações estas que são a matrícula do aluno e a cred_comp_int concluída do 
   ### curso com base na quantidade de créditos que o aluno já possui.
   def get_actives(self):
-    query = 'SELECT "DiscenteVinculo".matricula, SUM("Disciplina".creditos)\
+    query = 'SELECT "DiscenteVinculo".matricula, "Discente".per_int, "Discente".cred_obrig_int, "Discente".cred_opt_int, "Discente".cred_comp_int \
       FROM "DiscenteVinculo"\
-      INNER JOIN "DiscenteDisciplina"\
-        ON "DiscenteVinculo".matricula="DiscenteDisciplina".matricula\
-      INNER JOIN "Turma"\
-        ON "DiscenteDisciplina".id_turma="Turma".id\
-      INNER JOIN "Disciplina"\
-        ON "Turma".id_disciplina="Disciplina".id\
-      WHERE id_curso=' + self.id_computacao  + '\
-      AND id_situacao_vinculo=' + self.id_regular + '\
-      AND "DiscenteDisciplina".id_situacao=' + self.id_aprovado + '\
-      GROUP BY "DiscenteVinculo".matricula'
+      INNER JOIN "Discente"\
+        ON "DiscenteVinculo".cpf="Discente".cpf\
+      WHERE "DiscenteVinculo".id_curso=' + self.id_computacao + '\
+      AND "Discente".id_situacao=' + self.id_ativo + '\
+      AND "DiscenteVinculo".id_situacao_vinculo=' + self.id_regular
 
     result = self.connection.select(query)
 
     json_return = []
     for registro in result:
-      # percentual do curso concluído, com base na quantidade de créditos cursados. 
-      percentual_concluido = (registro[1] * 100) / int(constants.TOTAL_CREDITOS)
+      periodos_integralizados = int(registro[1])
+      cred_obrig_int = int(registro[2])
+      cred_opt_int = int(registro[3])
+      cred_comp_int = int(registro[4])
+
+      cred_comp_int = self.get_percent(cred_obrig_int, cred_opt_int, cred_comp_int)
 
       ano_ingresso = registro[0][1:3]
       semestre_ingresso = registro[0][3]
 
       periodo_ingresso = ano_ingresso + "." + semestre_ingresso
       
-      json_return.append({ "matricula": registro[0], "periodo_ingresso": periodo_ingresso,
-        "porcentagem_concluida": round(percentual_concluido, 2)})
+      json_return.append({ 
+        "matricula": registro[0], 
+        "periodo_ingresso": periodo_ingresso,
+        "periodos_integralizados": periodos_integralizados, 
+        "porcentagem_concluida": round(cred_comp_int, 2)})
 
     return jsonify(json_return)
 
