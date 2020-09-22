@@ -1,10 +1,15 @@
 from livereload import Server
 from controllers import *
 from flask import Flask
+from flask_cors import CORS
 from flask_swagger_ui import get_swaggerui_blueprint
 from properties import HOST, PORT
 
 app = Flask(__name__)
+
+cors = CORS(app)
+
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 app.register_blueprint(routes)
 
