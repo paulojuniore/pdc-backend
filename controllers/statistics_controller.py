@@ -38,3 +38,10 @@ def graduates_by_period():
 @cross_origin()
 def active_students():
   return curso.get_actives()
+
+# Rota responsável por retornar as informações que vão compor o arquivo .csv de alunos
+## ativos.
+@routes.route("/api/estatisticas/ativos/csv")
+@cross_origin()
+def export_to_csv_actives():
+  return curso.export_to_csv_actives()

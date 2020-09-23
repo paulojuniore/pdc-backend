@@ -36,6 +36,7 @@ class Curso():
     self.id_graduado = str(self.connection.select(query_id_graduado)[0][0])
     self.id_ativo = str(self.connection.select(query_id_ativo)[0][0])
 
+
   # Calcula o percentual do curso concluído de cada aluno a partir dos créditos.
   def get_percent(self, cred_obrig_int, cred_opt_int, cred_comp_int):
     result = 0
@@ -88,6 +89,58 @@ class Curso():
         "periodos_integralizados": periodos_integralizados, 
         "porcentagem_concluida": round(cred_comp_int, 2)})
 
+    return jsonify(json_return)
+
+  
+  # Função que retorna os dados para geração do arquivo csv de alunos ativos.
+  def export_to_csv_actives(self):
+    query = 'SELECT "DiscenteVinculo".matricula, per_int, cred_obrig_int, cred_opt_int, \
+        cred_comp_int, "Cota".descricao, "Genero".descricao, "EstadoCivil".descricao, \
+        "Discente".curriculo, cra, mc, iea, tranc, mat_inst, mob_estudantil, \
+        media_geral_ingresso \
+      FROM "DiscenteVinculo" \
+      INNER JOIN "Discente" \
+        ON "DiscenteVinculo".cpf = "Discente".cpf \
+      INNER JOIN "Cota" \
+        ON "Discente".id_cota = "Cota".id \
+      INNER JOIN "Genero" \
+        ON "Discente".id_genero = "Genero".id \
+      INNER JOIN "EstadoCivil" \
+        ON "Discente".id_estado_civil = "EstadoCivil".id \
+      WHERE "DiscenteVinculo".id_curso = ' + self.id_computacao + '\
+      AND "Discente".id_situacao = ' + self.id_ativo + '\
+      AND "DiscenteVinculo".id_situacao_vinculo = ' + self.id_regular + '\
+      AND "Discente".per_int > 0' 
+
+    result = self.connection.select(query)
+
+    json_return = []
+    for registro in result:
+      ano_ingresso = registro[0][1:3]
+      semestre_ingresso = registro[0][3]
+
+      periodo_ingresso = ano_ingresso + "." + semestre_ingresso
+
+      json_return.append({
+        "matricula": registro[0],
+        "periodo_ingresso": periodo_ingresso,
+        "periodos_integralizados": registro[1],
+        "cred_obrig_int": registro[2],
+        "cred_opt_int": registro[3],
+        "cred_comp_int": registro[4],
+        "cota": registro[5],
+        "genero": registro[6],
+        "estado_civil": registro[7],
+        "curriculo": registro[8],
+        "cra": registro[9],
+        "mc": registro[10],
+        "iea": registro[11],
+        "trancamentos_totais": registro[12],
+        "matriculas_institucionais": registro[13],
+        "mobilidade_estudantil": registro[14],
+        "media_geral_ingresso": registro[15]
+      })
+    
     return jsonify(json_return)
 
 
