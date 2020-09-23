@@ -87,7 +87,8 @@ class Curso():
         "matricula": registro[0], 
         "periodo_ingresso": periodo_ingresso,
         "periodos_integralizados": periodos_integralizados, 
-        "porcentagem_concluida": round(cred_comp_int, 2)})
+        "porcentagem_concluida": round(cred_comp_int, 2)
+      })
 
     return jsonify(json_return)
 
@@ -154,6 +155,7 @@ class Curso():
     periodo_min_graduados = results[0][0]
     max_graduados = results[0][1]
     min_graduados = results[0][1]
+    soma_cras = 0
 
     for i in range(len(results)):
       if (results[i][1] < min_graduados):
@@ -165,11 +167,13 @@ class Curso():
         max_graduados = results[i][1]
 
       total_graduados += results[i][1]
+      soma_cras += results[i][2]
 
     media_graduados = total_graduados / len(results)
+    media_cras = soma_cras / len(results)
 
     return [total_graduados, round(media_graduados, 2), periodo_min_graduados, 
-      periodo_max_graduados, min_graduados, max_graduados]
+      periodo_max_graduados, min_graduados, max_graduados, round(media_cras, 2)]
 
 
   # Função auxiliar que monta a estrutura json para os alunos egressos (graduados), 
@@ -178,7 +182,11 @@ class Curso():
   def formatter_graduates(self, periods):
     response = []
     for i in range(len(periods)):
-      response.append({"semestre_vinculo": periods[i][0], "qtd_egressos": periods[i][1]})
+      response.append({
+        "semestre_vinculo": periods[i][0], 
+        "qtd_egressos": periods[i][1],
+        "cra_medio": round(periods[i][2], 2),
+      })
 
     return response
 
@@ -192,19 +200,25 @@ class Curso():
     if (len(args) == 1):
       periodo = args.get('de')
 
-      query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos\
-        FROM "DiscenteVinculo"\
+      query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos, avg(cra) AS cra_medio \
+        FROM "DiscenteVinculo" \
+        INNER JOIN "Discente" \
+          ON "DiscenteVinculo".cpf = "Discente".cpf \
         WHERE id_curso=' + self.id_computacao + \
-        ' AND id_situacao_vinculo=' + self.id_graduado + '\
-        AND semestre_vinculo=\'' + str(periodo) + '\'\
-        GROUP BY semestre_vinculo\
+        ' AND id_situacao_vinculo=' + self.id_graduado + ' \
+        AND semestre_vinculo=\'' + str(periodo) + '\' \
+        GROUP BY semestre_vinculo \
         ORDER BY semestre_vinculo'
 
       result = self.connection.select(query)
 
       # Caso não hajam registros que correspondam a query passada.
       if (len(result) == 0):
-        return { "semestre_vinculo": periodo, "qtd_egressos": 0 }
+        return { 
+          "semestre_vinculo": periodo, 
+          "qtd_egressos": 0,
+          "cra_medio": 0 
+        }
       else:
         return jsonify(self.formatter_graduates(result))
     
@@ -221,8 +235,10 @@ class Curso():
       if (minimo > maximo or minimo == maximo):
         return { "error": "Parameters or invalid request" }, 404
 
-      query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos\
-        FROM "DiscenteVinculo"\
+      query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos, avg(cra) AS cra_medio \
+        FROM "DiscenteVinculo" \
+        INNER JOIN "Discente" \
+          ON "DiscenteVinculo".cpf = "Discente".cpf \
         WHERE id_curso=' + self.id_computacao + \
         'AND id_situacao_vinculo=' + self.id_graduado + \
         'AND semestre_vinculo BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\'\
@@ -232,16 +248,24 @@ class Curso():
       result = self.connection.select(query)
       statistics = self.get_statistics(result)
 
-      return jsonify(total_graduados=statistics[0], media_graduados=statistics[1], 
-        periodo_min_graduados=statistics[2], periodo_max_graduados=statistics[3],
-        min_graduados=statistics[4], max_graduados=statistics[5], 
-        periodos=self.formatter_graduates(result))
+      return jsonify(
+        total_graduados=statistics[0], 
+        media_graduados=statistics[1], 
+        periodo_min_graduados=statistics[2], 
+        periodo_max_graduados=statistics[3],
+        min_graduados=statistics[4], 
+        max_graduados=statistics[5],
+        cra_medio=statistics[6], 
+        periodos=self.formatter_graduates(result)
+      )
 
     # Para rotas do tipo '.../api/estatisticas/egressos', que retornam o número de egressos de
     ## todos os períodos até então cadastrados.
     else:
-      query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos\
-        FROM "DiscenteVinculo"\
+      query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos, avg(cra) AS cra_medio \
+        FROM "DiscenteVinculo" \
+        INNER JOIN "Discente" \
+          ON "DiscenteVinculo".cpf = "Discente".cpf \
         WHERE id_curso=' + self.id_computacao + \
         ' AND id_situacao_vinculo=' + self.id_graduado + '\
         GROUP BY semestre_vinculo\
@@ -250,10 +274,16 @@ class Curso():
       result = self.connection.select(query)
       statistics = self.get_statistics(result)
 
-      return jsonify(total_graduados=statistics[0], media_graduados=statistics[1], 
-        periodo_min_graduados=statistics[2], periodo_max_graduados=statistics[3], 
-        min_graduados=statistics[4], max_graduados=statistics[5], 
-        periodos=self.formatter_graduates(result))
+      return jsonify(
+        total_graduados=statistics[0], 
+        media_graduados=statistics[1], 
+        periodo_min_graduados=statistics[2], 
+        periodo_max_graduados=statistics[3], 
+        min_graduados=statistics[4], 
+        max_graduados=statistics[5], 
+        cra_medio=statistics[6],
+        periodos=self.formatter_graduates(result)
+      )
   
 
   # Função que retorna o número de alunos evadidos por período (a partir do id do motivo
