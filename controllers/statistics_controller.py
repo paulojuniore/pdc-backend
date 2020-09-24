@@ -45,3 +45,10 @@ def active_students():
 @cross_origin()
 def export_to_csv_actives():
   return curso.export_to_csv_actives()
+
+@routes.route("/api/estatisticas/egressos/csv")
+@cross_origin()
+def export_to_csv_graduates():
+  args = request.args
+
+  return curso.export_to_csv_graduates(args)
