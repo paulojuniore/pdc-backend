@@ -36,6 +36,7 @@ class Curso():
     self.id_graduado = str(self.connection.select(query_id_graduado)[0][0])
     self.id_ativo = str(self.connection.select(query_id_ativo)[0][0])
 
+
   # Calcula o percentual do curso concluído de cada aluno a partir dos créditos.
   def get_percent(self, cred_obrig_int, cred_opt_int, cred_comp_int):
     result = 0
@@ -51,6 +52,40 @@ class Curso():
     porcentagem = min(cred_obrig_int, 132) + min(cred_opt_int, 56) + result
 
     return (porcentagem / int(constants.TOTAL_CREDITOS)) * 100
+
+  # Função que formata o json de resposta das rotas que geram os dados para exportar para
+  ## o arquivo .csv. Essas rotas retornam informações sobre os alunos ativos, egressos ou
+  ### evadidos.
+  def response_json_to_csv_export(self, dados):
+    json_return = []
+   
+    for registro in dados:
+      ano_ingresso = registro[0][1:3]
+      semestre_ingresso = registro[0][3]
+
+      periodo_ingresso = ano_ingresso + "." + semestre_ingresso
+
+      json_return.append({
+        "matricula": registro[0],
+        "periodo_ingresso": periodo_ingresso,
+        "periodos_integralizados": registro[1],
+        "cred_obrig_int": registro[2],
+        "cred_opt_int": registro[3],
+        "cred_comp_int": registro[4],
+        "cota": registro[5],
+        "genero": registro[6],
+        "estado_civil": registro[7],
+        "curriculo": registro[8],
+        "cra": registro[9],
+        "mc": registro[10],
+        "iea": registro[11],
+        "trancamentos_totais": registro[12],
+        "matriculas_institucionais": registro[13],
+        "mobilidade_estudantil": registro[14],
+        "media_geral_ingresso": registro[15]
+      })
+    
+    return jsonify(json_return)
 
 
   # Função que retorna informações sobre os alunos ativos do curso de Computação,
@@ -86,9 +121,35 @@ class Curso():
         "matricula": registro[0], 
         "periodo_ingresso": periodo_ingresso,
         "periodos_integralizados": periodos_integralizados, 
-        "porcentagem_concluida": round(cred_comp_int, 2)})
+        "porcentagem_concluida": round(cred_comp_int, 2)
+      })
 
     return jsonify(json_return)
+
+  
+  # Função que retorna os dados para geração do arquivo csv de alunos ativos.
+  def export_to_csv_actives(self):
+    query = 'SELECT "DiscenteVinculo".matricula, per_int, cred_obrig_int, cred_opt_int, \
+        cred_comp_int, "Cota".descricao, "Genero".descricao, "EstadoCivil".descricao, \
+        "Discente".curriculo, cra, mc, iea, tranc, mat_inst, mob_estudantil, \
+        media_geral_ingresso \
+      FROM "DiscenteVinculo" \
+      INNER JOIN "Discente" \
+        ON "DiscenteVinculo".cpf = "Discente".cpf \
+      INNER JOIN "Cota" \
+        ON "Discente".id_cota = "Cota".id \
+      INNER JOIN "Genero" \
+        ON "Discente".id_genero = "Genero".id \
+      INNER JOIN "EstadoCivil" \
+        ON "Discente".id_estado_civil = "EstadoCivil".id \
+      WHERE "DiscenteVinculo".id_curso = ' + self.id_computacao + '\
+      AND "Discente".id_situacao = ' + self.id_ativo + '\
+      AND "DiscenteVinculo".id_situacao_vinculo = ' + self.id_regular + '\
+      AND "Discente".per_int > 0' 
+
+    result = self.connection.select(query)
+
+    return self.response_json_to_csv_export(result)
 
 
   # Função auxiliar que retorna estatísticas sobre os egressos, informações como o total 
@@ -101,6 +162,7 @@ class Curso():
     periodo_min_graduados = results[0][0]
     max_graduados = results[0][1]
     min_graduados = results[0][1]
+    soma_cras = 0
 
     for i in range(len(results)):
       if (results[i][1] < min_graduados):
@@ -112,11 +174,13 @@ class Curso():
         max_graduados = results[i][1]
 
       total_graduados += results[i][1]
+      soma_cras += results[i][2]
 
     media_graduados = total_graduados / len(results)
+    media_cras = soma_cras / len(results)
 
     return [total_graduados, round(media_graduados, 2), periodo_min_graduados, 
-      periodo_max_graduados, min_graduados, max_graduados]
+      periodo_max_graduados, min_graduados, max_graduados, round(media_cras, 2)]
 
 
   # Função auxiliar que monta a estrutura json para os alunos egressos (graduados), 
@@ -125,7 +189,11 @@ class Curso():
   def formatter_graduates(self, periods):
     response = []
     for i in range(len(periods)):
-      response.append({"semestre_vinculo": periods[i][0], "qtd_egressos": periods[i][1]})
+      response.append({
+        "semestre_vinculo": periods[i][0], 
+        "qtd_egressos": periods[i][1],
+        "cra_medio": round(periods[i][2], 2),
+      })
 
     return response
 
@@ -139,19 +207,25 @@ class Curso():
     if (len(args) == 1):
       periodo = args.get('de')
 
-      query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos\
-        FROM "DiscenteVinculo"\
+      query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos, avg(cra) AS cra_medio \
+        FROM "DiscenteVinculo" \
+        INNER JOIN "Discente" \
+          ON "DiscenteVinculo".cpf = "Discente".cpf \
         WHERE id_curso=' + self.id_computacao + \
-        ' AND id_situacao_vinculo=' + self.id_graduado + '\
-        AND semestre_vinculo=\'' + str(periodo) + '\'\
-        GROUP BY semestre_vinculo\
+        ' AND id_situacao_vinculo=' + self.id_graduado + ' \
+        AND semestre_vinculo=\'' + str(periodo) + '\' \
+        GROUP BY semestre_vinculo \
         ORDER BY semestre_vinculo'
 
       result = self.connection.select(query)
 
       # Caso não hajam registros que correspondam a query passada.
       if (len(result) == 0):
-        return { "semestre_vinculo": periodo, "qtd_egressos": 0 }
+        return { 
+          "semestre_vinculo": periodo, 
+          "qtd_egressos": 0,
+          "cra_medio": 0 
+        }
       else:
         return jsonify(self.formatter_graduates(result))
     
@@ -168,8 +242,10 @@ class Curso():
       if (minimo > maximo or minimo == maximo):
         return { "error": "Parameters or invalid request" }, 404
 
-      query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos\
-        FROM "DiscenteVinculo"\
+      query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos, avg(cra) AS cra_medio \
+        FROM "DiscenteVinculo" \
+        INNER JOIN "Discente" \
+          ON "DiscenteVinculo".cpf = "Discente".cpf \
         WHERE id_curso=' + self.id_computacao + \
         'AND id_situacao_vinculo=' + self.id_graduado + \
         'AND semestre_vinculo BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\'\
@@ -179,16 +255,24 @@ class Curso():
       result = self.connection.select(query)
       statistics = self.get_statistics(result)
 
-      return jsonify(total_graduados=statistics[0], media_graduados=statistics[1], 
-        periodo_min_graduados=statistics[2], periodo_max_graduados=statistics[3],
-        min_graduados=statistics[4], max_graduados=statistics[5], 
-        periodos=self.formatter_graduates(result))
+      return jsonify(
+        total_graduados=statistics[0], 
+        media_graduados=statistics[1], 
+        periodo_min_graduados=statistics[2], 
+        periodo_max_graduados=statistics[3],
+        min_graduados=statistics[4], 
+        max_graduados=statistics[5],
+        cra_medio=statistics[6], 
+        periodos=self.formatter_graduates(result)
+      )
 
     # Para rotas do tipo '.../api/estatisticas/egressos', que retornam o número de egressos de
     ## todos os períodos até então cadastrados.
     else:
-      query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos\
-        FROM "DiscenteVinculo"\
+      query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos, avg(cra) AS cra_medio \
+        FROM "DiscenteVinculo" \
+        INNER JOIN "Discente" \
+          ON "DiscenteVinculo".cpf = "Discente".cpf \
         WHERE id_curso=' + self.id_computacao + \
         ' AND id_situacao_vinculo=' + self.id_graduado + '\
         GROUP BY semestre_vinculo\
@@ -197,11 +281,95 @@ class Curso():
       result = self.connection.select(query)
       statistics = self.get_statistics(result)
 
-      return jsonify(total_graduados=statistics[0], media_graduados=statistics[1], 
-        periodo_min_graduados=statistics[2], periodo_max_graduados=statistics[3], 
-        min_graduados=statistics[4], max_graduados=statistics[5], 
-        periodos=self.formatter_graduates(result))
+      return jsonify(
+        total_graduados=statistics[0], 
+        media_graduados=statistics[1], 
+        periodo_min_graduados=statistics[2], 
+        periodo_max_graduados=statistics[3], 
+        min_graduados=statistics[4], 
+        max_graduados=statistics[5], 
+        cra_medio=statistics[6],
+        periodos=self.formatter_graduates(result)
+      )
   
+
+  def export_to_csv_graduates(self, args):
+
+    if (len(args) == 1):
+      periodo = args.get('de')
+
+      query = 'SELECT matricula, per_int, cred_obrig_int, cred_opt_int, cred_comp_int, \
+        "Cota".descricao, "Genero".descricao, "EstadoCivil".descricao, curriculo, cra, \
+        mc, iea, tranc, mat_inst, mob_estudantil, media_geral_ingresso \
+      FROM "Discente" \
+      INNER JOIN "DiscenteVinculo" \
+        ON "Discente".cpf = "DiscenteVinculo".cpf \
+      INNER JOIN "Cota" \
+        ON "Discente".id_cota = "Cota".id \
+      INNER JOIN "Genero" \
+        ON "Discente".id_genero = "Genero".id \
+      INNER JOIN "EstadoCivil" \
+        ON "Discente".id_estado_civil = "EstadoCivil".id \
+      WHERE id_curso = ' + self.id_computacao + ' \
+      AND id_situacao_vinculo = ' + self.id_graduado + ' \
+      AND semestre_vinculo=\'' + str(periodo) + '\' \
+      ORDER BY semestre_ingresso'
+
+      result = self.connection.select(query)
+
+      return self.response_json_to_csv_export(result)
+
+    elif (len(args) == 2):
+      minimo = args.get('de')
+      maximo = args.get('ate')
+
+      # Caso o periodo minimo do intervalo seja maior que o maximo ou então igual, retorna
+      ## uma mensagem de erro com código 404 not found.
+      if (minimo > maximo or minimo == maximo):
+        return { "error": "Parameters or invalid request" }, 404
+
+      query = 'SELECT matricula, per_int, cred_obrig_int, cred_opt_int, cred_comp_int, \
+          "Cota".descricao, "Genero".descricao, "EstadoCivil".descricao, curriculo, cra, \
+          mc, iea, tranc, mat_inst, mob_estudantil, media_geral_ingresso \
+        FROM "Discente" \
+        INNER JOIN "DiscenteVinculo" \
+          ON "Discente".cpf = "DiscenteVinculo".cpf \
+        INNER JOIN "Cota" \
+          ON "Discente".id_cota = "Cota".id \
+        INNER JOIN "Genero" \
+          ON "Discente".id_genero = "Genero".id \
+        INNER JOIN "EstadoCivil" \
+          ON "Discente".id_estado_civil = "EstadoCivil".id \
+        WHERE id_curso = ' + self.id_computacao + ' \
+        AND id_situacao_vinculo = ' + self.id_graduado + ' \
+        AND semestre_vinculo BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\'\
+        ORDER BY semestre_ingresso'
+
+      result = self.connection.select(query)
+
+      return self.response_json_to_csv_export(result)
+
+    else:
+      query = 'SELECT matricula, per_int, cred_obrig_int, cred_opt_int, cred_comp_int, \
+          "Cota".descricao, "Genero".descricao, "EstadoCivil".descricao, curriculo, cra, \
+          mc, iea, tranc, mat_inst, mob_estudantil, media_geral_ingresso \
+        FROM "Discente" \
+        INNER JOIN "DiscenteVinculo" \
+          ON "Discente".cpf = "DiscenteVinculo".cpf \
+        INNER JOIN "Cota" \
+          ON "Discente".id_cota = "Cota".id \
+        INNER JOIN "Genero" \
+          ON "Discente".id_genero = "Genero".id \
+        INNER JOIN "EstadoCivil" \
+          ON "Discente".id_estado_civil = "EstadoCivil".id \
+        WHERE id_curso = ' + self.id_computacao + '\
+        AND id_situacao_vinculo = ' + self.id_graduado + '\
+        ORDER BY semestre_ingresso'
+
+      result = self.connection.select(query)
+
+      return self.response_json_to_csv_export(result)
+
 
   # Função que retorna o número de alunos evadidos por período (a partir do id do motivo
   ## de cancelamento da matrícula) de um único período passado.
