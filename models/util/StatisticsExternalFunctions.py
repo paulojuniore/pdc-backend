@@ -1,5 +1,10 @@
+import sys
+sys.path.append("/connection")
 from flask import jsonify
 from util import constants
+from Connection import Connection
+
+connection = Connection()
 
 # Função que organiza a resposta das queries da rota ativos e elabora um json com todos
 ## as chaves e valores correspondentes.
@@ -121,4 +126,106 @@ def response_json_to_graduates_route(periods):
     })
 
   return response
+
+# Função que retorna o número de alunos evadidos por período (a partir do id do motivo
+## de cancelamento da matrícula) de um único período passado.
+def process_query_of_one_period(id_curso, id, periodo):
+
+  query = 'SELECT semestre_vinculo, count(*) AS qtd_evadidos\
+    FROM "DiscenteVinculo"\
+    WHERE id_curso=' + id_curso + \
+    ' AND id_situacao_vinculo=' + str(id) + '\
+    AND semestre_vinculo=\'' + str(periodo) + '\'\
+    GROUP BY semestre_vinculo\
+    ORDER BY semestre_vinculo'
+
+  result = connection.select(query)
+  
+  retorno = []
+  for i in range(len(result)):
+    retorno.append({"semestre": result[i][0], "tag"+str(id): result[i][1]})
+
+  return retorno
+
+
+# Função que retorna o número de alunos evadidos por período (a partir do id do motivo
+## de cancelamento da matrícula) de um intervalo de períodos passados.
+def process_query_of_interval_of_the_periods(id_curso, id, minimo, maximo):
+
+  query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos\
+    FROM "DiscenteVinculo"\
+    WHERE id_curso=' + id_curso + \
+    'AND id_situacao_vinculo=' + str(id) + \
+    'AND semestre_vinculo BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\'\
+    GROUP BY semestre_vinculo\
+    ORDER BY semestre_vinculo'
+
+  result = connection.select(query)
+  
+  retorno = []
+  for i in range(len(result)):
+    retorno.append({"semestre": result[i][0], "tag"+str(id): result[i][1]})
+
+  return retorno
+
+
+# Função que retorna o número de alunos evadidos por período, a partir do id do motivo
+## de cancelamento da matrícula, de todos os períodos registrados.
+def process_query_of_escaped(id_curso, id):
+
+  query = 'SELECT semestre_vinculo, count(*) AS qtd_evadidos\
+    FROM "DiscenteVinculo"\
+    WHERE id_curso=' + id_curso + \
+    ' AND id_situacao_vinculo=' + str(id) + '\
+    GROUP BY semestre_vinculo\
+    ORDER BY semestre_vinculo'
+
+  result = connection.select(query)
+  
+  retorno = []
+  for i in range(len(result)):
+    retorno.append({"semestre": result[i][0], "tag"+str(id): result[i][1]})
+
+  return retorno
+
+
+# Fazendo a junção entre os 9 arrays de evadidos pelos motivos de 1 a 9, para que o
+## array tenha o formato { "periodo": { "tag1": 0, "tag2": 0, ..., "tag9": 0 }, ... },
+### onde tag(i) significa o número de evadidos pelo motivo (i) naquele período, sendo
+#### "i" um valor entre 1 e 9.
+def join_results_of_escaped_query(results):
+  dic_periodos = {}
+  for i in range(len(results)):
+    for j in range(len(results[i])):
+      if (results[i][j]['semestre'] in dic_periodos):
+        dic_periodos[str(results[i][j]['semestre'])]['tag'+str(i+1)] = results[i][j]['tag'+str(i+1)]
+      else:
+        dic_periodos[str(results[i][j]['semestre'])] = { 'tag'+str(i+1): results[i][j]['tag'+str(i+1)] }
+
+  return dic_periodos
+
+
+# Preenchendo com 0 as tags que não existem no objeto de cada período. Exemplo: caso o
+## período X só tenha evadidos em "tag1", "tag2" e "tag3", o trecho abaixo irá preencher
+### o objeto com o restante das tags até a 9, todas com o valor 0.    
+def fill_tag_list_with_zeros(json):
+  for i in json:
+    for j in range(1,10):
+      if ('tag'+str(j) in json[i]):
+        pass
+      else:
+        json[i]['tag'+str(j)] = 0
+  
+  return json
+
+
+# Função que prepara o json para retorno, onde cada objeto irá possui a chave semestre com
+## o período e outra chave tags, que correspondem as 9 tags que representam a quantidade
+### de evadidos pelo motivo i, onde i é um número entre 1 e 9, inclusive.
+def response_json_to_escaped_route(json):
+  json_response = []
+  for i in json:
+    json_response.append({ "periodo": i, "tags": json[i] })
+  
+  return json_response
 
