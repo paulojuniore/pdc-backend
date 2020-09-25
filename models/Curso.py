@@ -59,10 +59,6 @@ class Curso():
         AND "Discente".per_int > 0 \
         AND "DiscenteVinculo".semestre_vinculo=\'' + str(periodo) + '\''
 
-      result = self.connection.select(query)
-
-      return response_json_to_active_route(result)
-
     elif (len(args) == 2):
       minimo = args.get('de')
       maximo = args.get('ate')
@@ -81,10 +77,6 @@ class Curso():
         AND "Discente".per_int > 0 \
         AND semestre_vinculo BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\''
 
-      result = self.connection.select(query)
-
-      return response_json_to_active_route(result)
-
     else:
 
       query = 'SELECT "DiscenteVinculo".matricula, "Discente".per_int, "Discente".cred_obrig_int, "Discente".cred_opt_int, "Discente".cred_comp_int \
@@ -96,33 +88,80 @@ class Curso():
         AND "DiscenteVinculo".id_situacao_vinculo=' + self.id_regular + '\
         AND "Discente".per_int > 0'
 
-      result = self.connection.select(query)
-
-      return response_json_to_active_route(result)
+    result = self.connection.select(query)
+    return response_json_to_active_route(result)
 
   
   # Função que retorna os dados para geração do arquivo csv de alunos ativos.
-  def export_to_csv_actives(self):
-    query = 'SELECT "DiscenteVinculo".matricula, per_int, cred_obrig_int, cred_opt_int, \
-        cred_comp_int, "Cota".descricao, "Genero".descricao, "EstadoCivil".descricao, \
-        "Discente".curriculo, cra, mc, iea, tranc, mat_inst, mob_estudantil, \
-        media_geral_ingresso \
-      FROM "DiscenteVinculo" \
-      INNER JOIN "Discente" \
-        ON "DiscenteVinculo".cpf = "Discente".cpf \
-      INNER JOIN "Cota" \
-        ON "Discente".id_cota = "Cota".id \
-      INNER JOIN "Genero" \
-        ON "Discente".id_genero = "Genero".id \
-      INNER JOIN "EstadoCivil" \
-        ON "Discente".id_estado_civil = "EstadoCivil".id \
-      WHERE "DiscenteVinculo".id_curso = ' + self.id_computacao + '\
-      AND "Discente".id_situacao = ' + self.id_ativo + '\
-      AND "DiscenteVinculo".id_situacao_vinculo = ' + self.id_regular + '\
-      AND "Discente".per_int > 0' 
+  def export_to_csv_actives(self, args):
+    if (len(args) == 1):
+      periodo = args.get('de')
+
+      query = 'SELECT "DiscenteVinculo".matricula, per_int, cred_obrig_int, cred_opt_int, \
+          cred_comp_int, "Cota".descricao, "Genero".descricao, "EstadoCivil".descricao, \
+          "Discente".curriculo, cra, mc, iea, tranc, mat_inst, mob_estudantil, \
+          media_geral_ingresso \
+        FROM "DiscenteVinculo" \
+        INNER JOIN "Discente" \
+          ON "DiscenteVinculo".cpf = "Discente".cpf \
+        INNER JOIN "Cota" \
+          ON "Discente".id_cota = "Cota".id \
+        INNER JOIN "Genero" \
+          ON "Discente".id_genero = "Genero".id \
+        INNER JOIN "EstadoCivil" \
+          ON "Discente".id_estado_civil = "EstadoCivil".id \
+        WHERE "DiscenteVinculo".id_curso = ' + self.id_computacao + '\
+        AND "Discente".id_situacao = ' + self.id_ativo + '\
+        AND "Discente".per_int > 0 \
+        AND "DiscenteVinculo".semestre_vinculo=\'' + str(periodo) + '\''
+
+    elif (len(args) == 2):
+      minimo = args.get('de')
+      maximo = args.get('ate')
+
+      # Caso o periodo minimo do intervalo seja maior que o maximo ou então igual, retorna
+      ## uma mensagem de erro com código 404 not found.
+      if (minimo > maximo or minimo == maximo):
+        return { "error": "Parameters or invalid request" }, 404
+      
+      query = 'SELECT "DiscenteVinculo".matricula, per_int, cred_obrig_int, cred_opt_int, \
+          cred_comp_int, "Cota".descricao, "Genero".descricao, "EstadoCivil".descricao, \
+          "Discente".curriculo, cra, mc, iea, tranc, mat_inst, mob_estudantil, \
+          media_geral_ingresso \
+        FROM "DiscenteVinculo" \
+        INNER JOIN "Discente" \
+          ON "DiscenteVinculo".cpf = "Discente".cpf \
+        INNER JOIN "Cota" \
+          ON "Discente".id_cota = "Cota".id \
+        INNER JOIN "Genero" \
+          ON "Discente".id_genero = "Genero".id \
+        INNER JOIN "EstadoCivil" \
+          ON "Discente".id_estado_civil = "EstadoCivil".id \
+        WHERE "DiscenteVinculo".id_curso = ' + self.id_computacao + '\
+        AND "Discente".id_situacao = ' + self.id_ativo + '\
+        AND "Discente".per_int > 0 \
+        AND semestre_vinculo BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\''
+
+    else:
+      query = 'SELECT "DiscenteVinculo".matricula, per_int, cred_obrig_int, cred_opt_int, \
+          cred_comp_int, "Cota".descricao, "Genero".descricao, "EstadoCivil".descricao, \
+          "Discente".curriculo, cra, mc, iea, tranc, mat_inst, mob_estudantil, \
+          media_geral_ingresso \
+        FROM "DiscenteVinculo" \
+        INNER JOIN "Discente" \
+          ON "DiscenteVinculo".cpf = "Discente".cpf \
+        INNER JOIN "Cota" \
+          ON "Discente".id_cota = "Cota".id \
+        INNER JOIN "Genero" \
+          ON "Discente".id_genero = "Genero".id \
+        INNER JOIN "EstadoCivil" \
+          ON "Discente".id_estado_civil = "EstadoCivil".id \
+        WHERE "DiscenteVinculo".id_curso = ' + self.id_computacao + '\
+        AND "Discente".id_situacao = ' + self.id_ativo + '\
+        AND "DiscenteVinculo".id_situacao_vinculo = ' + self.id_regular + '\
+        AND "Discente".per_int > 0' 
 
     result = self.connection.select(query)
-
     return response_json_to_csv_export(result)
 
 
@@ -224,7 +263,6 @@ class Curso():
   # Função responsável por buscar os dados dos alunos egressos e retorná-los para que o
   ## arquivo .csv possa ser gerado.
   def export_to_csv_graduates(self, args):
-
     if (len(args) == 1):
       periodo = args.get('de')
 
@@ -244,10 +282,6 @@ class Curso():
       AND id_situacao_vinculo = ' + self.id_graduado + ' \
       AND semestre_vinculo=\'' + str(periodo) + '\' \
       ORDER BY semestre_ingresso'
-
-      result = self.connection.select(query)
-
-      return response_json_to_csv_export(result)
 
     elif (len(args) == 2):
       minimo = args.get('de')
@@ -275,10 +309,6 @@ class Curso():
         AND semestre_vinculo BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\'\
         ORDER BY semestre_ingresso'
 
-      result = self.connection.select(query)
-
-      return response_json_to_csv_export(result)
-
     else:
       query = 'SELECT matricula, per_int, cred_obrig_int, cred_opt_int, cred_comp_int, \
           "Cota".descricao, "Genero".descricao, "EstadoCivil".descricao, curriculo, cra, \
@@ -296,9 +326,8 @@ class Curso():
         AND id_situacao_vinculo = ' + self.id_graduado + '\
         ORDER BY semestre_ingresso'
 
-      result = self.connection.select(query)
-
-      return response_json_to_csv_export(result)
+    result = self.connection.select(query)
+    return response_json_to_csv_export(result)
 
 
   # Função que retorna um json com todos os números de evadidos por período de todos os 
