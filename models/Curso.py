@@ -87,24 +87,13 @@ class Curso():
     
     return jsonify(json_return)
 
-
-  # Função que retorna informações sobre os alunos ativos do curso de Computação,
-  ## informações estas que são a matrícula do aluno e a cred_comp_int concluída do 
-  ### curso com base na quantidade de créditos que o aluno já possui.
-  def get_actives(self):
-    query = 'SELECT "DiscenteVinculo".matricula, "Discente".per_int, "Discente".cred_obrig_int, "Discente".cred_opt_int, "Discente".cred_comp_int \
-      FROM "DiscenteVinculo"\
-      INNER JOIN "Discente"\
-        ON "DiscenteVinculo".cpf="Discente".cpf\
-      WHERE "DiscenteVinculo".id_curso=' + self.id_computacao + '\
-      AND "Discente".id_situacao=' + self.id_ativo + '\
-      AND "DiscenteVinculo".id_situacao_vinculo=' + self.id_regular + '\
-      AND "Discente".per_int > 0'
-
-    result = self.connection.select(query)
-
+  
+  # Função que organiza a resposta das queries da rota ativos e elabora um json com todos
+  ## as chaves e valores correspondentes.
+  def response_json_to_active_route(self, dados):
     json_return = []
-    for registro in result:
+
+    for registro in dados:
       periodos_integralizados = int(registro[1])
       cred_obrig_int = int(registro[2])
       cred_opt_int = int(registro[3])
@@ -125,6 +114,64 @@ class Curso():
       })
 
     return jsonify(json_return)
+
+
+  # Função que retorna informações sobre os alunos ativos do curso de Computação,
+  ## informações estas que são a matrícula do aluno e a cred_comp_int concluída do 
+  ### curso com base na quantidade de créditos que o aluno já possui.
+  def get_actives(self, args):
+    if (len(args) == 1):
+      periodo = args.get('de')
+
+      query = 'SELECT "DiscenteVinculo".matricula, "Discente".per_int, "Discente".cred_obrig_int, "Discente".cred_opt_int, "Discente".cred_comp_int \
+        FROM "DiscenteVinculo" \
+        INNER JOIN "Discente" \
+          ON "DiscenteVinculo".cpf = "Discente".cpf \
+        WHERE "DiscenteVinculo".id_curso = ' + self.id_computacao + ' \
+        AND "Discente".id_situacao = ' + self.id_ativo + ' \
+        AND "Discente".per_int > 0 \
+        AND "DiscenteVinculo".semestre_vinculo=\'' + str(periodo) + '\''
+
+      result = self.connection.select(query)
+
+      return self.response_json_to_active_route(result)
+
+    elif (len(args) == 2):
+      minimo = args.get('de')
+      maximo = args.get('ate')
+
+      # Caso o periodo minimo do intervalo seja maior que o maximo ou então igual, retorna
+      ## uma mensagem de erro com código 404 not found.
+      if (minimo > maximo or minimo == maximo):
+        return { "error": "Parameters or invalid request" }, 404
+
+      query = 'SELECT "DiscenteVinculo".matricula, "Discente".per_int, "Discente".cred_obrig_int, "Discente".cred_opt_int, "Discente".cred_comp_int \
+        FROM "DiscenteVinculo"\
+        INNER JOIN "Discente"\
+          ON "DiscenteVinculo".cpf="Discente".cpf\
+        WHERE "DiscenteVinculo".id_curso=' + self.id_computacao + '\
+        AND "Discente".id_situacao=' + self.id_ativo + '\
+        AND "Discente".per_int > 0 \
+        AND semestre_vinculo BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\''
+
+      result = self.connection.select(query)
+
+      return self.response_json_to_active_route(result)
+
+    else:
+
+      query = 'SELECT "DiscenteVinculo".matricula, "Discente".per_int, "Discente".cred_obrig_int, "Discente".cred_opt_int, "Discente".cred_comp_int \
+        FROM "DiscenteVinculo"\
+        INNER JOIN "Discente"\
+          ON "DiscenteVinculo".cpf="Discente".cpf\
+        WHERE "DiscenteVinculo".id_curso=' + self.id_computacao + '\
+        AND "Discente".id_situacao=' + self.id_ativo + '\
+        AND "DiscenteVinculo".id_situacao_vinculo=' + self.id_regular + '\
+        AND "Discente".per_int > 0'
+
+      result = self.connection.select(query)
+
+      return self.response_json_to_active_route(result)
 
   
   # Função que retorna os dados para geração do arquivo csv de alunos ativos.
