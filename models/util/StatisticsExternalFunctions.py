@@ -49,9 +49,8 @@ def get_percent(cred_obrig_int, cred_opt_int, cred_comp_int):
 
   return (porcentagem / int(constants.TOTAL_CREDITOS)) * 100
 
-# Função que formata o json de resposta das rotas que geram os dados para exportar para
-## o arquivo .csv. Essas rotas retornam informações sobre os alunos ativos, egressos ou
-### evadidos.
+# Função que formata o json de resposta das rotas que geram os dados de alunos
+## ativos e egressos  para exportar para o arquivo .csv.
 def response_json_to_csv_export(dados):
   json_return = []
   
@@ -82,6 +81,42 @@ def response_json_to_csv_export(dados):
     })
   
   return jsonify(json_return)
+
+
+# Função que formata o json de resposta das rotas que geram os dados de alunos
+## evadidos para exportar para o arquivo .csv.
+def response_json_to_csv_escaped_export(dados):
+  json_return = []
+  
+  for registro in dados:
+    ano_ingresso = registro[0][1:3]
+    semestre_ingresso = registro[0][3]
+
+    periodo_ingresso = ano_ingresso + "." + semestre_ingresso
+
+    json_return.append({
+      "matricula": registro[0],
+      "periodo_ingresso": periodo_ingresso,
+      "motivo_evasao": registro[1],
+      "periodos_integralizados": registro[2],
+      "cred_obrig_int": registro[3],
+      "cred_opt_int": registro[4],
+      "cred_comp_int": registro[5],
+      "cota": registro[6],
+      "genero": registro[7],
+      "estado_civil": registro[8],
+      "curriculo": registro[8],
+      "cra": registro[10],
+      "mc": registro[11],
+      "iea": registro[12],
+      "trancamentos_totais": registro[13],
+      "matriculas_institucionais": registro[14],
+      "mobilidade_estudantil": registro[15],
+      "media_geral_ingresso": registro[16]
+    })
+  
+  return jsonify(json_return)
+
 
 # Função auxiliar que retorna estatísticas sobre os egressos, informações como o total 
 ## de graduados em um determinado intervalo de tempo, média de graduados, períodos que

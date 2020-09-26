@@ -9,7 +9,8 @@ sys.path.append("./models/util")
 from StatisticsExternalFunctions import (response_json_to_active_route, get_percent,
   response_json_to_csv_export, get_statistics, response_json_to_graduates_route,
   process_query_of_one_period, join_results_of_escaped_query, fill_tag_list_with_zeros,
-  response_json_to_escaped_route, process_query_of_escaped, process_query_of_interval_of_the_periods)
+  response_json_to_escaped_route, process_query_of_escaped, process_query_of_interval_of_the_periods,
+  response_json_to_csv_escaped_export)
 
 class Curso():
 
@@ -400,3 +401,30 @@ class Curso():
       
       return jsonify(json_return)  
 
+  
+  def export_to_csv_escaped(self, args):
+    if (len(args) == 1):
+      periodo = args.get('de')
+
+      query = 'SELECT matricula, "SituacaoVinculo".descricao, per_int, cred_obrig_int, \
+          cred_opt_int, cred_comp_int, "Cota".descricao, "Genero".descricao, \
+          "EstadoCivil".descricao, curriculo, cra, mc, iea, tranc, mat_inst, \
+          mob_estudantil, media_geral_ingresso \
+        FROM "DiscenteVinculo" \
+        INNER JOIN "Discente" \
+          ON "DiscenteVinculo".cpf = "Discente".cpf \
+        INNER JOIN "Cota" \
+          ON "Discente".id_cota = "Cota".id \
+        INNER JOIN "Genero" \
+          ON "Discente".id_genero = "Genero".id \
+        INNER JOIN "EstadoCivil" \
+          ON "Discente".id_estado_civil = "EstadoCivil".id \
+        INNER JOIN "SituacaoVinculo" \
+          ON "DiscenteVinculo".id_situacao_vinculo = "SituacaoVinculo".id \
+        AND id_situacao_vinculo BETWEEN 1 AND 9 \
+        AND semestre_vinculo=\'' + str(periodo) + '\' \
+        ORDER BY id_situacao_vinculo' 
+
+      result = self.connection.select(query)
+      return response_json_to_csv_escaped_export(result)
+      
