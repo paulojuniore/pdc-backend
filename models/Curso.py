@@ -402,29 +402,51 @@ class Curso():
       return jsonify(json_return)  
 
   
+  # Função responsável por buscar os dados para a geração do arquivo .csv de alunos evadidos.
   def export_to_csv_escaped(self, args):
+
+    # Query base que trás as informações que são comuns às rotas que possuem parâmetros,
+    ## e para cada parâmetro, a condição específica é adicionada a essa string de consulta
+    ### base.
+    base_query = 'SELECT matricula, "SituacaoVinculo".descricao, per_int, cred_obrig_int, \
+      cred_opt_int, cred_comp_int, "Cota".descricao, "Genero".descricao, \
+      "EstadoCivil".descricao, curriculo, cra, mc, iea, tranc, mat_inst, \
+      mob_estudantil, media_geral_ingresso \
+      FROM "DiscenteVinculo" \
+      INNER JOIN "Discente" \
+        ON "DiscenteVinculo".cpf = "Discente".cpf \
+      INNER JOIN "Cota" \
+        ON "Discente".id_cota = "Cota".id \
+      INNER JOIN "Genero" \
+        ON "Discente".id_genero = "Genero".id \
+      INNER JOIN "EstadoCivil" \
+        ON "Discente".id_estado_civil = "EstadoCivil".id \
+      INNER JOIN "SituacaoVinculo" \
+        ON "DiscenteVinculo".id_situacao_vinculo = "SituacaoVinculo".id \
+      AND id_curso = ' + self.id_computacao + '\
+      AND id_situacao_vinculo BETWEEN 1 AND 9'
+
     if (len(args) == 1):
       periodo = args.get('de')
 
-      query = 'SELECT matricula, "SituacaoVinculo".descricao, per_int, cred_obrig_int, \
-          cred_opt_int, cred_comp_int, "Cota".descricao, "Genero".descricao, \
-          "EstadoCivil".descricao, curriculo, cra, mc, iea, tranc, mat_inst, \
-          mob_estudantil, media_geral_ingresso \
-        FROM "DiscenteVinculo" \
-        INNER JOIN "Discente" \
-          ON "DiscenteVinculo".cpf = "Discente".cpf \
-        INNER JOIN "Cota" \
-          ON "Discente".id_cota = "Cota".id \
-        INNER JOIN "Genero" \
-          ON "Discente".id_genero = "Genero".id \
-        INNER JOIN "EstadoCivil" \
-          ON "Discente".id_estado_civil = "EstadoCivil".id \
-        INNER JOIN "SituacaoVinculo" \
-          ON "DiscenteVinculo".id_situacao_vinculo = "SituacaoVinculo".id \
-        AND id_situacao_vinculo BETWEEN 1 AND 9 \
-        AND semestre_vinculo=\'' + str(periodo) + '\' \
+      base_query += 'AND semestre_vinculo=\'' + str(periodo) + '\' \
         ORDER BY id_situacao_vinculo' 
+    
+    elif (len(args) == 2):
+      minimo = args.get('de')
+      maximo = args.get('ate')
 
-      result = self.connection.select(query)
-      return response_json_to_csv_escaped_export(result)
-      
+      # Caso o periodo minimo do intervalo seja maior que o maximo ou então igual, retorna
+      ## uma mensagem de erro com código 404 not found.
+      if (minimo > maximo or minimo == maximo):
+        return { "error": "Parameters or invalid request" }, 404
+
+      base_query += 'AND semestre_vinculo BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\'\
+        ORDER BY id_situacao_vinculo' 
+    
+    else:
+      base_query += 'ORDER BY id_situacao_vinculo'
+
+    result = self.connection.select(base_query)
+    return response_json_to_csv_escaped_export(result)
+    
