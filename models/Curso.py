@@ -54,12 +54,13 @@ class Curso():
         ON "DiscenteVinculo".cpf = "Discente".cpf \
       WHERE "DiscenteVinculo".id_curso = ' + self.id_computacao + ' \
       AND "Discente".id_situacao = ' + self.id_ativo + ' \
+      AND "DiscenteVinculo".id_situacao_vinculo = ' + self.id_regular + ' \
       AND "Discente".per_int > 0'
 
     if (len(args) == 1):
       periodo = args.get('de')
 
-      base_query += 'AND "DiscenteVinculo".semestre_vinculo=\'' + str(periodo) + '\''
+      base_query += 'AND "Discente".semestre_ingresso=\'' + str(periodo) + '\''
 
     elif (len(args) == 2):
       minimo = args.get('de')
@@ -70,7 +71,7 @@ class Curso():
       if (minimo > maximo or minimo == maximo):
         return { "error": "Parameters or invalid request" }, 404
 
-      base_query += 'AND semestre_vinculo BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\''
+      base_query += 'AND semestre_ingresso BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\''
 
     else:
       base_query = 'SELECT "DiscenteVinculo".matricula, "Discente".per_int, "Discente".cred_obrig_int, "Discente".cred_opt_int, "Discente".cred_comp_int \
