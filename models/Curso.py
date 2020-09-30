@@ -36,12 +36,16 @@ class Curso():
     query_id_ativo = 'SELECT "SituacaoDiscente".id FROM "SituacaoDiscente" \
       WHERE "SituacaoDiscente".descricao=\'' + str(constants.ATIVO_VALUE) + '\''
 
+    query_id_transferido = 'SELECT "SituacaoVinculo".id FROM "SituacaoVinculo" \
+      WHERE "SituacaoVinculo".descricao=\'' + str(constants.TRANFERIDO_VALUE) + '\''
+
     # id's das constantes
     self.id_computacao = str(self.connection.select(query_id_curso)[0][0])
     self.id_regular = str(self.connection.select(query_id_regular)[0][0])
     self.id_aprovado = str(self.connection.select(query_id_aprovado)[0][0])
     self.id_graduado = str(self.connection.select(query_id_graduado)[0][0])
     self.id_ativo = str(self.connection.select(query_id_ativo)[0][0])
+    self.id_transferido = str(self.connection.select(query_id_transferido)[0][0])
 
 
   # Função que retorna informações sobre os alunos ativos do curso de Computação,
@@ -259,7 +263,7 @@ class Curso():
 
       # processando individualmente query com o motivo de evasão 13, que é TRANSFERIDO
       ## PARA OUTRA IES.
-      evadidos_por_motivo.append(process_query_of_one_period(self.id_computacao, 13, periodo))
+      evadidos_por_motivo.append(process_query_of_one_period(self.id_computacao, self.id_transferido, periodo))
 
       joined_results = join_results_of_escaped_query(evadidos_por_motivo)
 
@@ -295,7 +299,7 @@ class Curso():
 
       # processando individualmente query com o motivo de evasão 13, que é TRANSFERIDO
       ## PARA OUTRA IES.
-      evadidos_por_motivo.append(process_query_of_interval_of_the_periods(self.id_computacao, 13, minimo, maximo))
+      evadidos_por_motivo.append(process_query_of_interval_of_the_periods(self.id_computacao, self.id_transferido, minimo, maximo))
 
       joined_results = join_results_of_escaped_query(evadidos_por_motivo)
       
@@ -316,7 +320,7 @@ class Curso():
       
       # processando individualmente query com o motivo de evasão 13, que é TRANSFERIDO
       ## PARA OUTRA IES.
-      evadidos_por_motivo.append(process_query_of_escaped(self.id_computacao, 13))
+      evadidos_por_motivo.append(process_query_of_escaped(self.id_computacao, self.id_transferido))
 
       joined_results = join_results_of_escaped_query(evadidos_por_motivo)
 
