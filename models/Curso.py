@@ -355,7 +355,8 @@ class Curso():
       INNER JOIN "SituacaoVinculo" \
         ON "DiscenteVinculo".id_situacao_vinculo = "SituacaoVinculo".id \
       AND id_curso = ' + self.id_computacao + '\
-      AND id_situacao_vinculo BETWEEN 1 AND 9'
+      AND (id_situacao_vinculo BETWEEN 1 AND 9 \
+      OR id_situacao_vinculo = ' + self.id_transferido + ')'
 
     if (len(args) == 1):
       periodo = args.get('de')
