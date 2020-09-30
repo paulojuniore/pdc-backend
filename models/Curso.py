@@ -257,13 +257,17 @@ class Curso():
       for i in range(1, 10):
         evadidos_por_motivo.append(process_query_of_one_period(self.id_computacao, i, periodo))
 
+      # processando individualmente query com o motivo de evasão 13, que é TRANSFERIDO
+      ## PARA OUTRA IES.
+      evadidos_por_motivo.append(process_query_of_one_period(self.id_computacao, 13, periodo))
+
       joined_results = join_results_of_escaped_query(evadidos_por_motivo)
 
       # Caso não hajam resultados para o periodo especificado, é retornado um json com
       ## todas as tags zeradas.
       if (len(joined_results) == 0):
         retorno =  {"periodo": periodo, "tags": { "tag1": 0, "tag2": 0, "tag3": 0, 
-          "tag4": 0, "tag5": 0, "tag6": 0, "tag7": 0, "tag8": 0, "tag9": 0 } }
+          "tag4": 0, "tag5": 0, "tag6": 0, "tag7": 0, "tag8": 0, "tag9": 0, "tag13": 0 } }
         
         return jsonify(retorno)
 
@@ -289,6 +293,10 @@ class Curso():
       for i in range(1, 10):
         evadidos_por_motivo.append(process_query_of_interval_of_the_periods(self.id_computacao, i, minimo, maximo))
 
+      # processando individualmente query com o motivo de evasão 13, que é TRANSFERIDO
+      ## PARA OUTRA IES.
+      evadidos_por_motivo.append(process_query_of_interval_of_the_periods(self.id_computacao, 13, minimo, maximo))
+
       joined_results = join_results_of_escaped_query(evadidos_por_motivo)
       
       joined_results_with_zeros = fill_tag_list_with_zeros(joined_results)
@@ -305,6 +313,10 @@ class Curso():
       evadidos_por_motivo = []
       for i in range(1, 10):
         evadidos_por_motivo.append(process_query_of_escaped(self.id_computacao, i))
+      
+      # processando individualmente query com o motivo de evasão 13, que é TRANSFERIDO
+      ## PARA OUTRA IES.
+      evadidos_por_motivo.append(process_query_of_escaped(self.id_computacao, 13))
 
       joined_results = join_results_of_escaped_query(evadidos_por_motivo)
 
