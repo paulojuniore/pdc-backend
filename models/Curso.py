@@ -48,17 +48,18 @@ class Curso():
   ## informações estas que são a matrícula do aluno e a cred_comp_int concluída do 
   ### curso com base na quantidade de créditos que o aluno já possui.
   def get_actives(self, args):
+    base_query = 'SELECT "DiscenteVinculo".matricula, "Discente".per_int, "Discente".cred_obrig_int, "Discente".cred_opt_int, "Discente".cred_comp_int \
+      FROM "DiscenteVinculo" \
+      INNER JOIN "Discente" \
+        ON "DiscenteVinculo".cpf = "Discente".cpf \
+      WHERE "DiscenteVinculo".id_curso = ' + self.id_computacao + ' \
+      AND "Discente".id_situacao = ' + self.id_ativo + ' \
+      AND "Discente".per_int > 0'
+
     if (len(args) == 1):
       periodo = args.get('de')
 
-      query = 'SELECT "DiscenteVinculo".matricula, "Discente".per_int, "Discente".cred_obrig_int, "Discente".cred_opt_int, "Discente".cred_comp_int \
-        FROM "DiscenteVinculo" \
-        INNER JOIN "Discente" \
-          ON "DiscenteVinculo".cpf = "Discente".cpf \
-        WHERE "DiscenteVinculo".id_curso = ' + self.id_computacao + ' \
-        AND "Discente".id_situacao = ' + self.id_ativo + ' \
-        AND "Discente".per_int > 0 \
-        AND "DiscenteVinculo".semestre_vinculo=\'' + str(periodo) + '\''
+      base_query += 'AND "DiscenteVinculo".semestre_vinculo=\'' + str(periodo) + '\''
 
     elif (len(args) == 2):
       minimo = args.get('de')
@@ -69,18 +70,10 @@ class Curso():
       if (minimo > maximo or minimo == maximo):
         return { "error": "Parameters or invalid request" }, 404
 
-      query = 'SELECT "DiscenteVinculo".matricula, "Discente".per_int, "Discente".cred_obrig_int, "Discente".cred_opt_int, "Discente".cred_comp_int \
-        FROM "DiscenteVinculo"\
-        INNER JOIN "Discente"\
-          ON "DiscenteVinculo".cpf="Discente".cpf\
-        WHERE "DiscenteVinculo".id_curso=' + self.id_computacao + '\
-        AND "Discente".id_situacao=' + self.id_ativo + '\
-        AND "Discente".per_int > 0 \
-        AND semestre_vinculo BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\''
+      base_query += 'AND semestre_vinculo BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\''
 
     else:
-
-      query = 'SELECT "DiscenteVinculo".matricula, "Discente".per_int, "Discente".cred_obrig_int, "Discente".cred_opt_int, "Discente".cred_comp_int \
+      base_query = 'SELECT "DiscenteVinculo".matricula, "Discente".per_int, "Discente".cred_obrig_int, "Discente".cred_opt_int, "Discente".cred_comp_int \
         FROM "DiscenteVinculo"\
         INNER JOIN "Discente"\
           ON "DiscenteVinculo".cpf="Discente".cpf\
@@ -89,7 +82,7 @@ class Curso():
         AND "DiscenteVinculo".id_situacao_vinculo=' + self.id_regular + '\
         AND "Discente".per_int > 0'
 
-    result = self.connection.select(query)
+    result = self.connection.select(base_query)
     return response_json_to_active_route(result)
 
   
@@ -137,22 +130,23 @@ class Curso():
   ## Computação e suas estatísticas de todos os períodos.
   def get_graduates(self, args):
 
+    base_query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos, avg(cra) AS cra_medio \
+      FROM "DiscenteVinculo" \
+      INNER JOIN "Discente" \
+        ON "DiscenteVinculo".cpf = "Discente".cpf \
+      WHERE id_curso=' + self.id_computacao + '\
+      AND id_situacao_vinculo=' + self.id_graduado
+
     # Para rotas do tipo /api/estatisticas/egressos?de=2019.2, por exemplo.
     ## Retorna o número de egressos que o período informado na rota obteve.
     if (len(args) == 1):
       periodo = args.get('de')
 
-      query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos, avg(cra) AS cra_medio \
-        FROM "DiscenteVinculo" \
-        INNER JOIN "Discente" \
-          ON "DiscenteVinculo".cpf = "Discente".cpf \
-        WHERE id_curso=' + self.id_computacao + \
-        ' AND id_situacao_vinculo=' + self.id_graduado + ' \
-        AND semestre_vinculo=\'' + str(periodo) + '\' \
+      base_query += 'AND semestre_vinculo=\'' + str(periodo) + '\' \
         GROUP BY semestre_vinculo \
         ORDER BY semestre_vinculo'
 
-      result = self.connection.select(query)
+      result = self.connection.select(base_query)
 
       # Caso não hajam registros que correspondam a query passada.
       if (len(result) == 0):
@@ -164,7 +158,6 @@ class Curso():
       else:
         return jsonify(response_json_to_graduates_route(result))
     
-
     # Para rotas do tipo '.../api/estatisticas/egressos?de=1999.1&ate=2010.2', por exemplo.
     ## retornam o número de egressos por período na faixa que foi especificada na rota, além
     ### de suas estatísticas.
@@ -177,55 +170,29 @@ class Curso():
       if (minimo > maximo or minimo == maximo):
         return { "error": "Parameters or invalid request" }, 404
 
-      query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos, avg(cra) AS cra_medio \
-        FROM "DiscenteVinculo" \
-        INNER JOIN "Discente" \
-          ON "DiscenteVinculo".cpf = "Discente".cpf \
-        WHERE id_curso=' + self.id_computacao + \
-        'AND id_situacao_vinculo=' + self.id_graduado + \
-        'AND semestre_vinculo BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\'\
+      base_query += 'AND semestre_vinculo BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\'\
         GROUP BY semestre_vinculo\
         ORDER BY semestre_vinculo'
-
-      result = self.connection.select(query)
-      statistics = get_statistics(result)
-
-      return jsonify(
-        total_graduados=statistics[0], 
-        media_graduados=statistics[1], 
-        periodo_min_graduados=statistics[2], 
-        periodo_max_graduados=statistics[3],
-        min_graduados=statistics[4], 
-        max_graduados=statistics[5],
-        cra_medio=statistics[6], 
-        periodos=response_json_to_graduates_route(result)
-      )
 
     # Para rotas do tipo '.../api/estatisticas/egressos', que retornam o número de egressos de
     ## todos os períodos até então cadastrados.
     else:
-      query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos, avg(cra) AS cra_medio \
-        FROM "DiscenteVinculo" \
-        INNER JOIN "Discente" \
-          ON "DiscenteVinculo".cpf = "Discente".cpf \
-        WHERE id_curso=' + self.id_computacao + \
-        ' AND id_situacao_vinculo=' + self.id_graduado + '\
-        GROUP BY semestre_vinculo\
+      base_query += 'GROUP BY semestre_vinculo \
         ORDER BY semestre_vinculo'
 
-      result = self.connection.select(query)
-      statistics = get_statistics(result)
+    result = self.connection.select(base_query)
+    statistics = get_statistics(result)
 
-      return jsonify(
-        total_graduados=statistics[0], 
-        media_graduados=statistics[1], 
-        periodo_min_graduados=statistics[2], 
-        periodo_max_graduados=statistics[3], 
-        min_graduados=statistics[4], 
-        max_graduados=statistics[5], 
-        cra_medio=statistics[6],
-        periodos=response_json_to_graduates_route(result)
-      )
+    return jsonify(
+      total_graduados=statistics[0], 
+      media_graduados=statistics[1], 
+      periodo_min_graduados=statistics[2], 
+      periodo_max_graduados=statistics[3],
+      min_graduados=statistics[4], 
+      max_graduados=statistics[5],
+      cra_medio=statistics[6], 
+      periodos=response_json_to_graduates_route(result)
+    )
   
 
   # Função responsável por buscar os dados dos alunos egressos e retorná-los para que o
@@ -327,12 +294,13 @@ class Curso():
 
       json_return = response_json_to_escaped_route(joined_results_with_zeros)
 
-      return jsonify(json_return)
+      sorted_json = sorted(json_return, key=lambda k: k['periodo'])
+
+      return jsonify(sorted_json)
       
     # Caso não seja passado parâmetro algum na rota, são trazidos os dados de todos os períodos
     ## já cadastrados
     else:
-      
       evadidos_por_motivo = []
       for i in range(1, 10):
         evadidos_por_motivo.append(process_query_of_escaped(self.id_computacao, i))
@@ -342,8 +310,10 @@ class Curso():
       joined_results_with_zeros = fill_tag_list_with_zeros(joined_results)
 
       json_return = response_json_to_escaped_route(joined_results_with_zeros)
+
+      sorted_json = sorted(json_return, key=lambda k: k['periodo'])
       
-      return jsonify(json_return)  
+      return jsonify(sorted_json)  
 
   
   # Função responsável por buscar os dados para a geração do arquivo .csv de alunos evadidos.
