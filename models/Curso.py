@@ -36,9 +36,6 @@ class Curso():
     query_id_ativo = 'SELECT "SituacaoDiscente".id FROM "SituacaoDiscente" \
       WHERE "SituacaoDiscente".descricao=\'' + str(constants.ATIVO_VALUE) + '\''
 
-    query_id_transferido = 'SELECT "SituacaoVinculo".id FROM "SituacaoVinculo" \
-      WHERE "SituacaoVinculo".descricao=\'' + str(constants.TRANFERIDO_VALUE) + '\''
-
     query_id_concluido_nao_colou_grau = 'SELECT "SituacaoVinculo".id FROM "SituacaoVinculo" \
       WHERE "SituacaoVinculo".descricao=\'' + str(constants.CONCLUIDO_VALUE) + '\''
 
@@ -48,7 +45,6 @@ class Curso():
     self.id_aprovado = str(self.connection.select(query_id_aprovado)[0][0])
     self.id_graduado = str(self.connection.select(query_id_graduado)[0][0])
     self.id_ativo = str(self.connection.select(query_id_ativo)[0][0])
-    self.id_transferido = str(self.connection.select(query_id_transferido)[0][0])
     self.id_concluido = str(self.connection.select(query_id_concluido_nao_colou_grau)[0][0])
     
 
@@ -350,8 +346,9 @@ class Curso():
       INNER JOIN "SituacaoVinculo" \
         ON "DiscenteVinculo".id_situacao_vinculo = "SituacaoVinculo".id \
       AND id_curso = ' + self.id_computacao + '\
-      AND (id_situacao_vinculo BETWEEN 1 AND 9 \
-      OR id_situacao_vinculo = ' + self.id_transferido + ')'
+      AND id_situacao_vinculo <> ' + self.id_concluido + '\
+      AND id_situacao_vinculo <> ' + self.id_graduado + ' \
+      AND id_situacao_vinculo <> ' + self.id_regular
 
     if (len(args) == 1):
       periodo = args.get('de')
