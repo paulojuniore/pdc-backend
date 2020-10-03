@@ -36,8 +36,8 @@ class Curso():
     query_id_ativo = 'SELECT "SituacaoDiscente".id FROM "SituacaoDiscente" \
       WHERE "SituacaoDiscente".descricao=\'' + str(constants.ATIVO_VALUE) + '\''
 
-    query_id_transferido = 'SELECT "SituacaoVinculo".id FROM "SituacaoVinculo" \
-      WHERE "SituacaoVinculo".descricao=\'' + str(constants.TRANFERIDO_VALUE) + '\''
+    query_id_concluido_nao_colou_grau = 'SELECT "SituacaoVinculo".id FROM "SituacaoVinculo" \
+      WHERE "SituacaoVinculo".descricao=\'' + str(constants.CONCLUIDO_VALUE) + '\''
 
     # id's das constantes
     self.id_computacao = str(self.connection.select(query_id_curso)[0][0])
@@ -45,8 +45,8 @@ class Curso():
     self.id_aprovado = str(self.connection.select(query_id_aprovado)[0][0])
     self.id_graduado = str(self.connection.select(query_id_graduado)[0][0])
     self.id_ativo = str(self.connection.select(query_id_ativo)[0][0])
-    self.id_transferido = str(self.connection.select(query_id_transferido)[0][0])
-
+    self.id_concluido = str(self.connection.select(query_id_concluido_nao_colou_grau)[0][0])
+    
 
   # Função que retorna informações sobre os alunos ativos do curso de Computação,
   ## informações estas que são a matrícula do aluno e a cred_comp_int concluída do 
@@ -258,12 +258,9 @@ class Curso():
       # Processando queries com os ID's de 1 a 9 e armazenando todos os resultados em uma lista,
       ## para posteriormente fazer um merge dos resultados.
       evadidos_por_motivo = []
-      for i in range(1, 10):
-        evadidos_por_motivo.append(process_query_of_one_period(self.id_computacao, i, periodo))
-
-      # processando individualmente query com o motivo de evasão 13, que é TRANSFERIDO
-      ## PARA OUTRA IES.
-      evadidos_por_motivo.append(process_query_of_one_period(self.id_computacao, self.id_transferido, periodo))
+      for i in range(1, 14):
+        if (i != int(self.id_concluido) and i != int(self.id_graduado) and i != int(self.id_regular)):
+          evadidos_por_motivo.append(process_query_of_one_period(self.id_computacao, i, periodo))
 
       joined_results = join_results_of_escaped_query(evadidos_por_motivo)
 
@@ -294,12 +291,9 @@ class Curso():
         return { "error": "Parameters or invalid request" }, 404
 
       evadidos_por_motivo = []
-      for i in range(1, 10):
-        evadidos_por_motivo.append(process_query_of_interval_of_the_periods(self.id_computacao, i, minimo, maximo))
-
-      # processando individualmente query com o motivo de evasão 13, que é TRANSFERIDO
-      ## PARA OUTRA IES.
-      evadidos_por_motivo.append(process_query_of_interval_of_the_periods(self.id_computacao, self.id_transferido, minimo, maximo))
+      for i in range(1, 14):
+        if (i != int(self.id_concluido) and i != int(self.id_graduado) and i != int(self.id_regular)):
+          evadidos_por_motivo.append(process_query_of_interval_of_the_periods(self.id_computacao, i, minimo, maximo))
 
       joined_results = join_results_of_escaped_query(evadidos_por_motivo)
       
@@ -315,12 +309,9 @@ class Curso():
     ## já cadastrados
     else:
       evadidos_por_motivo = []
-      for i in range(1, 10):
-        evadidos_por_motivo.append(process_query_of_escaped(self.id_computacao, i))
-      
-      # processando individualmente query com o motivo de evasão 13, que é TRANSFERIDO
-      ## PARA OUTRA IES.
-      evadidos_por_motivo.append(process_query_of_escaped(self.id_computacao, self.id_transferido))
+      for i in range(1, 14):
+        if (i != int(self.id_concluido) and i != int(self.id_graduado) and i != int(self.id_regular)):
+          evadidos_por_motivo.append(process_query_of_escaped(self.id_computacao, i))
 
       joined_results = join_results_of_escaped_query(evadidos_por_motivo)
 
@@ -355,8 +346,9 @@ class Curso():
       INNER JOIN "SituacaoVinculo" \
         ON "DiscenteVinculo".id_situacao_vinculo = "SituacaoVinculo".id \
       AND id_curso = ' + self.id_computacao + '\
-      AND (id_situacao_vinculo BETWEEN 1 AND 9 \
-      OR id_situacao_vinculo = ' + self.id_transferido + ')'
+      AND id_situacao_vinculo <> ' + self.id_concluido + '\
+      AND id_situacao_vinculo <> ' + self.id_graduado + ' \
+      AND id_situacao_vinculo <> ' + self.id_regular
 
     if (len(args) == 1):
       periodo = args.get('de')
