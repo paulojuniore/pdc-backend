@@ -18,15 +18,10 @@ def response_json_to_active_route(dados):
     cred_comp_int = int(registro[4])
 
     cred_comp_int = get_percent(cred_obrig_int, cred_opt_int, cred_comp_int)
-
-    ano_ingresso = registro[0][1:3]
-    semestre_ingresso = registro[0][3]
-
-    periodo_ingresso = ano_ingresso + "." + semestre_ingresso
     
     json_return.append({ 
       "matricula": registro[0], 
-      "periodo_ingresso": periodo_ingresso,
+      "periodo_ingresso": registro[5],
       "periodos_integralizados": periodos_integralizados, 
       "porcentagem_concluida": round(cred_comp_int, 2)
     })
@@ -148,7 +143,7 @@ def response_json_to_graduates_route(periods):
   response = []
   for i in range(len(periods)):
     response.append({
-      "semestre_vinculo": periods[i][0], 
+      "semestre_ingresso": periods[i][0], 
       "qtd_egressos": periods[i][1],
       "cra_medio": round(periods[i][2], 2),
     })
