@@ -52,7 +52,9 @@ class Curso():
   ## informações estas que são a matrícula do aluno e a cred_comp_int concluída do 
   ### curso com base na quantidade de créditos que o aluno já possui.
   def get_actives(self, args):
-    base_query = 'SELECT "DiscenteVinculo".matricula, "Discente".per_int, "Discente".cred_obrig_int, "Discente".cred_opt_int, "Discente".cred_comp_int \
+    base_query = 'SELECT "DiscenteVinculo".matricula, "Discente".per_int, \
+      "Discente".cred_obrig_int, "Discente".cred_opt_int, "Discente".cred_comp_int, \
+      "Discente".semestre_ingresso \
       FROM "DiscenteVinculo" \
       INNER JOIN "Discente" \
         ON "DiscenteVinculo".cpf = "Discente".cpf \
@@ -75,17 +77,11 @@ class Curso():
       if (minimo > maximo or minimo == maximo):
         return { "error": "Parameters or invalid request" }, 404
 
-      base_query += 'AND semestre_ingresso BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\''
+      base_query += 'AND semestre_ingresso BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\' \
+        ORDER BY semestre_ingresso'
 
     else:
-      base_query = 'SELECT "DiscenteVinculo".matricula, "Discente".per_int, "Discente".cred_obrig_int, "Discente".cred_opt_int, "Discente".cred_comp_int \
-        FROM "DiscenteVinculo"\
-        INNER JOIN "Discente"\
-          ON "DiscenteVinculo".cpf="Discente".cpf\
-        WHERE "DiscenteVinculo".id_curso=' + self.id_computacao + '\
-        AND "Discente".id_situacao=' + self.id_ativo + '\
-        AND "DiscenteVinculo".id_situacao_vinculo=' + self.id_regular + '\
-        AND "Discente".per_int > 0'
+      base_query += 'ORDER BY semestre_ingresso'
 
     result = self.connection.select(base_query)
     return response_json_to_active_route(result)
@@ -94,10 +90,10 @@ class Curso():
   # Função que retorna os dados para geração do arquivo csv de alunos ativos.
   def export_to_csv_actives(self, args):
 
-    base_query = 'SELECT "DiscenteVinculo".matricula, per_int, cred_obrig_int, cred_opt_int, \
-      cred_comp_int, "Cota".descricao, "Genero".descricao, "EstadoCivil".descricao, \
-      "Discente".curriculo, cra, mc, iea, tranc, mat_inst, mob_estudantil, \
-      media_geral_ingresso \
+    base_query = 'SELECT "DiscenteVinculo".matricula, semestre_ingresso, per_int, \
+      cred_obrig_int, cred_opt_int, cred_comp_int, "Cota".descricao, "Genero".descricao, \
+      "EstadoCivil".descricao, "Discente".curriculo, cra, mc, iea, tranc, mat_inst, \
+      mob_estudantil, media_geral_ingresso \
       FROM "DiscenteVinculo" \
       INNER JOIN "Discente" \
         ON "DiscenteVinculo".cpf = "Discente".cpf \
@@ -109,12 +105,13 @@ class Curso():
         ON "Discente".id_estado_civil = "EstadoCivil".id \
       WHERE "DiscenteVinculo".id_curso = ' + self.id_computacao + '\
       AND "Discente".id_situacao = ' + self.id_ativo + '\
+      AND "DiscenteVinculo".id_situacao_vinculo = ' + self.id_regular + ' \
       AND "Discente".per_int > 0'
 
     if (len(args) == 1):
       periodo = args.get('de')
 
-      base_query += 'AND "DiscenteVinculo".semestre_vinculo=\'' + str(periodo) + '\''
+      base_query += 'AND semestre_ingresso=\'' + str(periodo) + '\''
 
     elif (len(args) == 2):
       minimo = args.get('de')
@@ -125,7 +122,11 @@ class Curso():
       if (minimo > maximo or minimo == maximo):
         return { "error": "Parameters or invalid request" }, 404
       
-      base_query += 'AND semestre_vinculo BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\''
+      base_query += 'AND semestre_ingresso BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\' \
+        ORDER BY semestre_ingresso'
+    
+    else:
+      base_query += 'ORDER BY semestre_ingresso'
 
     result = self.connection.select(base_query)
     return response_json_to_csv_export(result)
@@ -135,7 +136,7 @@ class Curso():
   ## Computação e suas estatísticas de todos os períodos.
   def get_graduates(self, args):
 
-    base_query = 'SELECT semestre_vinculo, count(*) AS qtd_egressos, avg(cra) AS cra_medio \
+    base_query = 'SELECT semestre_ingresso, count(*) AS qtd_egressos, avg(cra) AS cra_medio \
       FROM "DiscenteVinculo" \
       INNER JOIN "Discente" \
         ON "DiscenteVinculo".cpf = "Discente".cpf \
@@ -147,16 +148,16 @@ class Curso():
     if (len(args) == 1):
       periodo = args.get('de')
 
-      base_query += 'AND semestre_vinculo=\'' + str(periodo) + '\' \
-        GROUP BY semestre_vinculo \
-        ORDER BY semestre_vinculo'
+      base_query += 'AND semestre_ingresso=\'' + str(periodo) + '\' \
+        GROUP BY semestre_ingresso \
+        ORDER BY semestre_ingresso'
 
       result = self.connection.select(base_query)
 
       # Caso não hajam registros que correspondam a query passada.
       if (len(result) == 0):
         return { 
-          "semestre_vinculo": periodo, 
+          "semestre_ingresso": periodo, 
           "qtd_egressos": 0,
           "cra_medio": 0 
         }
@@ -175,15 +176,15 @@ class Curso():
       if (minimo > maximo or minimo == maximo):
         return { "error": "Parameters or invalid request" }, 404
 
-      base_query += 'AND semestre_vinculo BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\'\
-        GROUP BY semestre_vinculo\
-        ORDER BY semestre_vinculo'
+      base_query += 'AND semestre_ingresso BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\'\
+        GROUP BY semestre_ingresso \
+        ORDER BY semestre_ingresso'
 
     # Para rotas do tipo '.../api/estatisticas/egressos', que retornam o número de egressos de
     ## todos os períodos até então cadastrados.
     else:
-      base_query += 'GROUP BY semestre_vinculo \
-        ORDER BY semestre_vinculo'
+      base_query += 'GROUP BY semestre_ingresso \
+        ORDER BY semestre_ingresso'
 
     result = self.connection.select(base_query)
     statistics = get_statistics(result)
@@ -207,9 +208,9 @@ class Curso():
     # Query base que trás as informações que são comuns às rotas que possuem parâmetros,
     ## e para cada parâmetro, a condição específica é adicionada a essa string de consulta
     ### base.
-    base_query = 'SELECT matricula, per_int, cred_obrig_int, cred_opt_int, cred_comp_int, \
-      "Cota".descricao, "Genero".descricao, "EstadoCivil".descricao, curriculo, cra, \
-      mc, iea, tranc, mat_inst, mob_estudantil, media_geral_ingresso \
+    base_query = 'SELECT matricula, semestre_ingresso, per_int, cred_obrig_int, \
+      cred_opt_int, cred_comp_int, "Cota".descricao, "Genero".descricao, "EstadoCivil".descricao, \
+      curriculo, cra, mc, iea, tranc, mat_inst, mob_estudantil, media_geral_ingresso \
       FROM "Discente" \
       INNER JOIN "DiscenteVinculo" \
         ON "Discente".cpf = "DiscenteVinculo".cpf \
@@ -225,7 +226,7 @@ class Curso():
     if (len(args) == 1):
       periodo = args.get('de')
 
-      base_query += 'AND semestre_vinculo=\'' + str(periodo) + '\' \
+      base_query += 'AND semestre_ingresso=\'' + str(periodo) + '\' \
       ORDER BY semestre_ingresso'
 
     elif (len(args) == 2):
@@ -237,7 +238,7 @@ class Curso():
       if (minimo > maximo or minimo == maximo):
         return { "error": "Parameters or invalid request" }, 404
 
-      base_query += 'AND semestre_vinculo BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\'\
+      base_query += 'AND semestre_ingresso BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\'\
         ORDER BY semestre_ingresso'
 
     else:
@@ -330,10 +331,10 @@ class Curso():
     # Query base que trás as informações que são comuns às rotas que possuem parâmetros,
     ## e para cada parâmetro, a condição específica é adicionada a essa string de consulta
     ### base.
-    base_query = 'SELECT matricula, "SituacaoVinculo".descricao, per_int, cred_obrig_int, \
-      cred_opt_int, cred_comp_int, "Cota".descricao, "Genero".descricao, \
-      "EstadoCivil".descricao, curriculo, cra, mc, iea, tranc, mat_inst, \
-      mob_estudantil, media_geral_ingresso \
+    base_query = 'SELECT matricula, semestre_ingresso, "SituacaoVinculo".descricao, \
+      per_int, cred_obrig_int, cred_opt_int, cred_comp_int, "Cota".descricao, \
+      "Genero".descricao, "EstadoCivil".descricao, curriculo, cra, mc, iea, tranc, \
+      mat_inst, mob_estudantil, media_geral_ingresso \
       FROM "DiscenteVinculo" \
       INNER JOIN "Discente" \
         ON "DiscenteVinculo".cpf = "Discente".cpf \
@@ -353,7 +354,7 @@ class Curso():
     if (len(args) == 1):
       periodo = args.get('de')
 
-      base_query += 'AND semestre_vinculo=\'' + str(periodo) + '\' \
+      base_query += 'AND semestre_ingresso=\'' + str(periodo) + '\' \
         ORDER BY id_situacao_vinculo' 
     
     elif (len(args) == 2):
@@ -365,12 +366,13 @@ class Curso():
       if (minimo > maximo or minimo == maximo):
         return { "error": "Parameters or invalid request" }, 404
 
-      base_query += 'AND semestre_vinculo BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\'\
-        ORDER BY id_situacao_vinculo' 
+      base_query += 'AND semestre_ingresso BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\'\
+        ORDER BY semestre_ingresso' 
     
     else:
-      base_query += 'ORDER BY id_situacao_vinculo'
+      base_query += 'ORDER BY semestre_ingresso'
 
     result = self.connection.select(base_query)
+    print (len(result))
     return response_json_to_csv_escaped_export(result)
     
