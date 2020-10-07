@@ -10,7 +10,7 @@ from StatisticsExternalFunctions import (response_json_to_active_route, get_perc
   response_json_to_csv_export, get_statistics, response_json_to_graduates_route,
   process_query_of_one_period, join_results_of_escaped_query, fill_tag_list_with_zeros,
   response_json_to_escaped_route, process_query_of_escaped, process_query_of_interval_of_the_periods,
-  response_json_to_csv_escaped_export)
+  response_json_to_csv_escaped_export, add_periods_without_escaped)
 
 class Curso():
 
@@ -288,7 +288,7 @@ class Curso():
 
       # Caso o periodo minimo do intervalo seja maior que o maximo ou então igual, retorna
       ## uma mensagem de erro com código 404 not found.
-      if (minimo > maximo or minimo == maximo):
+      if (minimo > maximo):
         return { "error": "Parameters or invalid request" }, 404
 
       evadidos_por_motivo = []
@@ -297,8 +297,10 @@ class Curso():
           evadidos_por_motivo.append(process_query_of_interval_of_the_periods(self.id_computacao, i, minimo, maximo))
 
       joined_results = join_results_of_escaped_query(evadidos_por_motivo)
-      
-      joined_results_with_zeros = fill_tag_list_with_zeros(joined_results)
+
+      joined_results_all = add_periods_without_escaped(periodo_min=minimo, periodo_max=maximo, dados=joined_results)
+
+      joined_results_with_zeros = fill_tag_list_with_zeros(joined_results_all)
 
       json_return = response_json_to_escaped_route(joined_results_with_zeros)
 
@@ -316,7 +318,9 @@ class Curso():
 
       joined_results = join_results_of_escaped_query(evadidos_por_motivo)
 
-      joined_results_with_zeros = fill_tag_list_with_zeros(joined_results)
+      joined_results_all = add_periods_without_escaped(dados=joined_results)
+
+      joined_results_with_zeros = fill_tag_list_with_zeros(joined_results_all)
 
       json_return = response_json_to_escaped_route(joined_results_with_zeros)
 
@@ -373,6 +377,5 @@ class Curso():
       base_query += 'ORDER BY semestre_ingresso'
 
     result = self.connection.select(base_query)
-    print (len(result))
     return response_json_to_csv_escaped_export(result)
     

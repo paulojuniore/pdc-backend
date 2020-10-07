@@ -241,6 +241,29 @@ def join_results_of_escaped_query(results):
   return dic_periodos
 
 
+# Função responsável por adicionar a resposta json os períodos do intervalo que não possui
+## alunos evadidos de nenhum dos tipos. periodo_min e max têm valores padrão para o caso de
+### a função ser chamadas sem os parâmetros 'de' e 'ate', ou seja, todo o intervalo.
+def add_periods_without_escaped(periodo_min='1987.1', periodo_max='2020.1', *, dados):
+  ano_ini = int(periodo_min[:4])
+  ano_fim = int(periodo_max[:4])
+  semestre_ini = int(periodo_min[5])
+  semestre_fim = int(periodo_max[5])
+
+  for ano in range(ano_ini, ano_fim+1):
+    for semestre in range(1, 3):
+      if (ano == ano_fim and semestre > semestre_fim):
+        pass
+      elif (ano == ano_ini and semestre < semestre_ini):
+        pass
+      else:
+        periodo = str(ano) + '.' + str(semestre)
+        if (periodo not in dados):
+          dados[str(ano)+'.'+str(semestre)] = {}
+    
+  return dados
+
+
 # Preenchendo com 0 as tags que não existem no objeto de cada período. Exemplo: caso o
 ## período X só tenha evadidos em "tag1", "tag2" e "tag3", o trecho abaixo irá preencher
 ### o objeto com o restante das tags até a 9 e também a 13, todas com o valor 0.    
