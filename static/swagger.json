@@ -1,42 +1,537 @@
 {
   "openapi": "3.0.0",
   "info": {
+    "title": "Eureca - API REST",
     "description": "Computação@UFCG",
-    "version": "1.0.0",
-    "title": "Painel de Controle - Backend",
-    "contact": {
-      "email": ""
-    },
-    "license": {
-      "name": "GNU - General Public License",
-      "url": "https://opensource.org/licenses/gpl-license"
-    }
+    "version": "0.1-oas3"
   },
   "servers": [
     {
       "url": "/"
     }
   ],
-  "tags": [
-    {
-      "name": "PDC Backend",
-      "description": "Example API"
-    }
-  ],
   "paths": {
-    "/api/estatisticas/egressos": {
+    "/api/estatisticas/ativos": {
       "get": {
-        "tags": [
-          "Egressos Request"
+        "parameters": [
+          {
+            "name": "de",
+            "in": "query",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2015.1"
+          },
+          {
+            "name": "ate",
+            "in": "query",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2018.1"
+          }
         ],
-        "summary": "Return egressos request",
         "responses": {
           "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/api/estatisticas/egressos"
+            "description": "Definition generated from Swagger Inspector",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Model0"
+                }
+              }
             }
           }
+        }
+      }
+    },
+    "/api/estatisticas/ativos/csv": {
+      "get": {
+        "parameters": [
+          {
+            "name": "de",
+            "in": "query",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2018.1"
+          },
+          {
+            "name": "ate",
+            "in": "query",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2020.1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Definition generated from Swagger Inspector"
+          }
+        }
+      }
+    },
+    "/api/estatisticas/egressos/csv": {
+      "get": {
+        "parameters": [
+          {
+            "name": "de",
+            "in": "query",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2002.1"
+          },
+          {
+            "name": "ate",
+            "in": "query",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2005.1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Definition generated from Swagger Inspector"
+          }
+        }
+      }
+    },
+    "/api/estatisticas/egressos": {
+      "get": {
+        "parameters": [
+          {
+            "name": "de",
+            "in": "query",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2010.1"
+          },
+          {
+            "name": "ate",
+            "in": "query",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2012.1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Definition generated from Swagger Inspector",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Model2"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Definition generated from Swagger Inspector"
+          }
+        }
+      }
+    },
+    "/api/estatisticas/evadidos/csv": {
+      "get": {
+        "parameters": [
+          {
+            "name": "de",
+            "in": "query",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2002.1"
+          },
+          {
+            "name": "ate",
+            "in": "query",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2005.1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Definition generated from Swagger Inspector",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Model3"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/estatisticas/evadidos": {
+      "get": {
+        "parameters": [
+          {
+            "name": "de",
+            "in": "query",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2000.1"
+          },
+          {
+            "name": "ate",
+            "in": "query",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2002.1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Definition generated from Swagger Inspector",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Model4"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Array": {
+        "properties": {
+          "matricula": {
+            "type": "string"
+          },
+          "periodo_ingresso": {
+            "type": "string"
+          },
+          "periodos_integralizados": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "porcentagem_concluida": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "Model0": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Array"
+        }
+      },
+      "Array1": {
+        "properties": {
+          "cra_medio": {
+            "type": "number",
+            "format": "double"
+          },
+          "qtd_egressos": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "semestre_ingresso": {
+            "type": "string"
+          }
+        }
+      },
+      "Model1": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Array1"
+        }
+      },
+      "Periodos": {
+        "properties": {
+          "cra_medio": {
+            "type": "number",
+            "format": "double"
+          },
+          "qtd_egressos": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "semestre_ingresso": {
+            "type": "string"
+          }
+        }
+      },
+      "Model2": {
+        "properties": {
+          "cra_medio": {
+            "type": "number",
+            "format": "double"
+          },
+          "max_graduados": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "media_graduados": {
+            "type": "number",
+            "format": "double"
+          },
+          "min_graduados": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "periodo_max_graduados": {
+            "type": "string"
+          },
+          "periodo_min_graduados": {
+            "type": "string"
+          },
+          "periodos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Periodos"
+            }
+          },
+          "total_graduados": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "Array2": {
+        "properties": {
+          "cota": {
+            "type": "string"
+          },
+          "cra": {
+            "type": "number",
+            "format": "double"
+          },
+          "cred_comp_int": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cred_obrig_int": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cred_opt_int": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "curriculo": {
+            "type": "string"
+          },
+          "estado_civil": {
+            "type": "string"
+          },
+          "genero": {
+            "type": "string"
+          },
+          "iea": {
+            "type": "number",
+            "format": "double"
+          },
+          "matricula": {
+            "type": "string"
+          },
+          "matriculas_institucionais": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "mc": {
+            "type": "number",
+            "format": "double"
+          },
+          "media_geral_ingresso": {
+            "type": "number",
+            "format": "double"
+          },
+          "mobilidade_estudantil": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "motivo_evasao": {
+            "type": "string"
+          },
+          "periodo_ingresso": {
+            "type": "string"
+          },
+          "periodos_integralizados": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "trancamentos_totais": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "Model3": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Array2"
+        }
+      },
+      "Tags": {
+        "properties": {
+          "tag1": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tag13": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tag2": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tag3": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tag4": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tag5": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tag6": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tag7": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tag8": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tag9": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "Model1_Array": {
+        "properties": {
+          "periodo": {
+            "type": "string"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          }
+        }
+      },
+      "Model4": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Model1_Array"
+        }
+      },
+      "Model2_Array_Tags": {
+        "properties": {
+          "tag1": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tag13": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tag2": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tag3": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tag4": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tag5": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tag6": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tag7": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tag8": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tag9": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "Model2_Array": {
+        "properties": {
+          "periodo": {
+            "type": "string"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Model2_Array_Tags"
+          }
+        }
+      },
+      "Model5": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Model2_Array"
         }
       }
     }

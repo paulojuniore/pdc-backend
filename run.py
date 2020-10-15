@@ -20,7 +20,7 @@ SWAGGERUI_BLUEPRINT = get_swaggerui_blueprint(
   SWAGGER_URL,
   API_URL,
   config={
-    'app-name': "PDC Backend"
+    'app-name': "Eureca - API REST"
   }
 )
 app.register_blueprint(SWAGGERUI_BLUEPRINT, url_prefix=SWAGGER_URL)
