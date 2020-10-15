@@ -10,9 +10,26 @@
       "url": "/"
     }
   ],
+  "tags": [
+    {
+      "name": "Ativos",
+      "description": "Routes to select data about actives."
+    },
+    {
+      "name": "Egressos",
+      "description": "Routes to select data about graduates."
+    },
+    {
+      "name": "Evadidos",
+      "description": "Routes to select data about escaped."
+    }
+  ],
   "paths": {
     "/api/estatisticas/ativos": {
       "get": {
+        "tags": [
+          "Ativos"
+        ],
         "parameters": [
           {
             "name": "de",
@@ -53,6 +70,9 @@
     },
     "/api/estatisticas/ativos/csv": {
       "get": {
+        "tags": [
+          "Ativos"
+        ],
         "parameters": [
           {
             "name": "de",
@@ -84,41 +104,11 @@
         }
       }
     },
-    "/api/estatisticas/egressos/csv": {
-      "get": {
-        "parameters": [
-          {
-            "name": "de",
-            "in": "query",
-            "required": false,
-            "style": "form",
-            "explode": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "2002.1"
-          },
-          {
-            "name": "ate",
-            "in": "query",
-            "required": false,
-            "style": "form",
-            "explode": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "2005.1"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Definition generated from Swagger Inspector"
-          }
-        }
-      }
-    },
     "/api/estatisticas/egressos": {
       "get": {
+        "tags": [
+          "Egressos"
+        ],
         "parameters": [
           {
             "name": "de",
@@ -160,8 +150,11 @@
         }
       }
     },
-    "/api/estatisticas/evadidos/csv": {
+    "/api/estatisticas/egressos/csv": {
       "get": {
+        "tags": [
+          "Egressos"
+        ],
         "parameters": [
           {
             "name": "de",
@@ -188,20 +181,16 @@
         ],
         "responses": {
           "200": {
-            "description": "Definition generated from Swagger Inspector",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Model3"
-                }
-              }
-            }
+            "description": "Definition generated from Swagger Inspector"
           }
         }
       }
     },
     "/api/estatisticas/evadidos": {
       "get": {
+        "tags": [
+          "Evadidos"
+        ],
         "parameters": [
           {
             "name": "de",
@@ -233,6 +222,49 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Model4"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/estatisticas/evadidos/csv": {
+      "get": {
+        "tags": [
+          "Evadidos"
+        ],
+        "parameters": [
+          {
+            "name": "de",
+            "in": "query",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2002.1"
+          },
+          {
+            "name": "ate",
+            "in": "query",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2005.1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Definition generated from Swagger Inspector",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Model3"
                 }
               }
             }
