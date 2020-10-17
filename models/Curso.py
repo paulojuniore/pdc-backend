@@ -47,6 +47,11 @@ class Curso():
     self.id_ativo = str(self.connection.select(query_id_ativo)[0][0])
     self.id_concluido = str(self.connection.select(query_id_concluido_nao_colou_grau)[0][0])
     
+  def get_period(self, args):
+      periodo = args.get('de')
+
+      result = 'AND "Discente".semestre_ingresso=\'' + str(periodo) + '\''
+      return result
 
   # Função que retorna informações sobre os alunos ativos do curso de Computação,
   ## informações estas que são a matrícula do aluno e a cred_comp_int concluída do 
@@ -64,21 +69,24 @@ class Curso():
       AND "DiscenteVinculo".per_int > 0'
 
     if (len(args) == 1):
-      periodo = args.get('de')
-
-      base_query += 'AND semestre_ingresso=\'' + str(periodo) + '\''
+      base_query += self.get_period(args)
 
     elif (len(args) == 2):
       minimo = args.get('de')
       maximo = args.get('ate')
 
-      # Caso o periodo minimo do intervalo seja maior que o maximo ou então igual, retorna
+      # Caso o periodo minimo do intervalo seja maior que o maximo, retorna
       ## uma mensagem de erro com código 404 not found.
-      if (minimo > maximo or minimo == maximo):
+      if (minimo > maximo):
         return { "error": "Parameters or invalid request" }, 404
 
-      base_query += 'AND semestre_ingresso BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\' \
-        ORDER BY semestre_ingresso'
+      # Caso sejam iguais
+      if(minimo == maximo):
+        base_query += self.get_period(args)
+      # Caso normal, minimo < maximo
+      else:
+        base_query += 'AND semestre_ingresso BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\' \
+          ORDER BY semestre_ingresso'
 
     else:
       base_query += 'ORDER BY semestre_ingresso'
@@ -109,22 +117,23 @@ class Curso():
       AND "DiscenteVinculo".per_int > 0'
 
     if (len(args) == 1):
-      periodo = args.get('de')
-
-      base_query += 'AND semestre_ingresso=\'' + str(periodo) + '\''
+      base_query += self.get_period(args)
 
     elif (len(args) == 2):
       minimo = args.get('de')
       maximo = args.get('ate')
 
-      # Caso o periodo minimo do intervalo seja maior que o maximo ou então igual, retorna
+      # Caso o periodo minimo do intervalo seja maior que o maximo, retorna
       ## uma mensagem de erro com código 404 not found.
-      if (minimo > maximo or minimo == maximo):
-        return { "error": "Parameters or invalid request" }, 404
       
-      base_query += 'AND semestre_ingresso BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\' \
-        ORDER BY semestre_ingresso'
-    
+      # Caso sejam iguais
+      if(minimo == maximo):
+        base_query += self.get_period(args)
+      # Caso normal, minimo < maximo
+      else:
+        base_query += 'AND semestre_ingresso BETWEEN \'' + str(minimo) + '\' AND \'' + str(maximo) + '\' \
+          ORDER BY semestre_ingresso'
+
     else:
       base_query += 'ORDER BY semestre_ingresso'
 
