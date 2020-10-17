@@ -13,9 +13,21 @@ def response_json_to_active_route(dados):
 
   for registro in dados:
     periodos_integralizados = int(registro[1])
-    cred_obrig_int = int(registro[2])
-    cred_opt_int = int(registro[3])
-    cred_comp_int = int(registro[4])
+
+    if (registro[2] == None):
+      cred_obrig_int = 0
+    else:
+      cred_obrig_int = int(registro[2])
+
+    if (registro[3] == None):
+      cred_opt_int = 0
+    else:
+      cred_opt_int = int(registro[3])
+    
+    if (registro[4] == None):
+      cred_comp_int = 0
+    else:
+      cred_comp_int = int(registro[4]) 
 
     cred_comp_int = get_percent(cred_obrig_int, cred_opt_int, cred_comp_int)
     

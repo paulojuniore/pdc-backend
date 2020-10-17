@@ -52,21 +52,21 @@ class Curso():
   ## informações estas que são a matrícula do aluno e a cred_comp_int concluída do 
   ### curso com base na quantidade de créditos que o aluno já possui.
   def get_actives(self, args):
-    base_query = 'SELECT "DiscenteVinculo".matricula, "Discente".per_int, \
-      "Discente".cred_obrig_int, "Discente".cred_opt_int, "Discente".cred_comp_int, \
-      "Discente".semestre_ingresso \
+    base_query = 'SELECT "DiscenteVinculo".matricula, "DiscenteVinculo".per_int, \
+      "DiscenteVinculo".cred_obrig_int, "DiscenteVinculo".cred_opt_int, "DiscenteVinculo".cred_comp_int, \
+      "DiscenteVinculo".semestre_ingresso \
       FROM "DiscenteVinculo" \
       INNER JOIN "Discente" \
         ON "DiscenteVinculo".cpf = "Discente".cpf \
       WHERE "DiscenteVinculo".id_curso = ' + self.id_computacao + ' \
-      AND "Discente".id_situacao = ' + self.id_ativo + ' \
+      AND "DiscenteVinculo".id_situacao = ' + self.id_ativo + ' \
       AND "DiscenteVinculo".id_situacao_vinculo = ' + self.id_regular + ' \
-      AND "Discente".per_int > 0'
+      AND "DiscenteVinculo".per_int > 0'
 
     if (len(args) == 1):
       periodo = args.get('de')
 
-      base_query += 'AND "Discente".semestre_ingresso=\'' + str(periodo) + '\''
+      base_query += 'AND semestre_ingresso=\'' + str(periodo) + '\''
 
     elif (len(args) == 2):
       minimo = args.get('de')
@@ -92,21 +92,21 @@ class Curso():
 
     base_query = 'SELECT "DiscenteVinculo".matricula, semestre_ingresso, per_int, \
       cred_obrig_int, cred_opt_int, cred_comp_int, "Cota".descricao, "Genero".descricao, \
-      "EstadoCivil".descricao, "Discente".curriculo, cra, mc, iea, tranc, mat_inst, \
+      "EstadoCivil".descricao, curriculo, cra, mc, iea, tranc, mat_inst, \
       mob_estudantil, media_geral_ingresso \
       FROM "DiscenteVinculo" \
       INNER JOIN "Discente" \
         ON "DiscenteVinculo".cpf = "Discente".cpf \
       INNER JOIN "Cota" \
-        ON "Discente".id_cota = "Cota".id \
+        ON "DiscenteVinculo".id_cota = "Cota".id \
       INNER JOIN "Genero" \
         ON "Discente".id_genero = "Genero".id \
       INNER JOIN "EstadoCivil" \
         ON "Discente".id_estado_civil = "EstadoCivil".id \
       WHERE "DiscenteVinculo".id_curso = ' + self.id_computacao + '\
-      AND "Discente".id_situacao = ' + self.id_ativo + '\
+      AND "DiscenteVinculo".id_situacao = ' + self.id_ativo + '\
       AND "DiscenteVinculo".id_situacao_vinculo = ' + self.id_regular + ' \
-      AND "Discente".per_int > 0'
+      AND "DiscenteVinculo".per_int > 0'
 
     if (len(args) == 1):
       periodo = args.get('de')
@@ -211,11 +211,11 @@ class Curso():
     base_query = 'SELECT matricula, semestre_ingresso, per_int, cred_obrig_int, \
       cred_opt_int, cred_comp_int, "Cota".descricao, "Genero".descricao, "EstadoCivil".descricao, \
       curriculo, cra, mc, iea, tranc, mat_inst, mob_estudantil, media_geral_ingresso \
-      FROM "Discente" \
-      INNER JOIN "DiscenteVinculo" \
-        ON "Discente".cpf = "DiscenteVinculo".cpf \
+      FROM "DiscenteVinculo" \
+      INNER JOIN "Discente" \
+        ON "DiscenteVinculo".cpf = "Discente".cpf \
       INNER JOIN "Cota" \
-        ON "Discente".id_cota = "Cota".id \
+        ON "DiscenteVinculo".id_cota = "Cota".id \
       INNER JOIN "Genero" \
         ON "Discente".id_genero = "Genero".id \
       INNER JOIN "EstadoCivil" \
@@ -343,7 +343,7 @@ class Curso():
       INNER JOIN "Discente" \
         ON "DiscenteVinculo".cpf = "Discente".cpf \
       INNER JOIN "Cota" \
-        ON "Discente".id_cota = "Cota".id \
+        ON "DiscenteVinculo".id_cota = "Cota".id \
       INNER JOIN "Genero" \
         ON "Discente".id_genero = "Genero".id \
       INNER JOIN "EstadoCivil" \
